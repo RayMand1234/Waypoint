@@ -21,11 +21,7 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 - **Styling — decided:** **Unistyles 3**. No MUI, no Tamagui, no NativeWind, no third-party pre-styled component kits — Waypoint's components are our own, built from the design system. Rules in "Styling" below.
 - **Backend — decided:** Node + **Express** (v5). Route handlers are plain functions, no classes, no DI container. Validate request input with Zod at the handler boundary.
 - **Database — decided:** **Supabase**-hosted Postgres, used as plain Postgres. **Prisma** is the data layer (schema file, generated client, plain-object results; no TypeORM, no decorator entities). Prisma uses Supabase's pooled URL at runtime and the direct URL for migrations. The free plan pauses idle projects and has no backups: fine for development, upgrade before real users.
-- **Auth — decided:** **Supabase Auth** — email link, Google, Apple.
-  - The app signs in with `supabase-js` (auth calls only) and keeps the session. This is the **single exception** to "the app never calls outside sources directly"; the app never reads or writes data through Supabase.
-  - `apiRequest()` sends the current access token as `Authorization: Bearer <token>`. An Express middleware verifies it against the project's JWKS (`jose`), rejects invalid/expired tokens with 401, and puts the user id on the request. Handlers trust only that id, never one from the body.
-  - Supabase owns the `auth` schema. Prisma never migrates it; Waypoint's own tables (e.g. `profiles`, `trips`) reference the Supabase user id.
-  - Email-link login needs an Expo deep-link scheme registered as a Supabase redirect URL.
+- **Auth — decided:** **Supabase Auth** — email, Google, Apple. Implementation in "Auth" below.
 - **Cache — open:** Postgres first; add Redis (e.g. Upstash) only when measured load needs it.
 - **Free-tier services first.**
 
@@ -36,6 +32,25 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 - **Provider adapters:** see the contract below. Swapping or adding a source never touches anything outside that source's adapter folder and the provider list.
 - **Day planning is hybrid:** a deterministic algorithm handles area grouping, opening hours and travel times; an LLM only picks spots for the traveler's styles and writes descriptions. Keep the two separate so the algorithm stays testable without the LLM.
 - **Destinations at launch:** a curated list of 50–100 cities tagged by style.
+
+## Auth (Supabase Auth — agreed implementation)
+
+**App side**
+
+- `shared/auth/supabase.ts` creates the one `supabase-js` client with the **publishable** key, `storage: AsyncStorage`, `autoRefreshToken`, `persistSession`, `detectSessionInUrl: false`, and starts/stops auto-refresh on `AppState` foreground/background. It is used for **auth calls only** — the single exception to "the app never calls outside sources directly". The app never reads or writes data through Supabase.
+- **Email:** 6-digit code — `signInWithOtp({ email })` then `verifyOtp({ email, token, type: 'email' })`. No magic-link deep linking. (Email template must include `{{ .Token }}`.)
+- **Apple / Google:** native sign-in (`expo-apple-authentication`, `@react-native-google-signin/google-signin`) returns an ID token, passed to `supabase.auth.signInWithIdToken({ provider, token })`. Apple sign-in is mandatory on iOS because Google is offered.
+- Session state is a discriminated union (`loading | signed-out | signed-in`) from one `useSession` hook built on `getSession()` + `onAuthStateChange`. This is auth-client state, not server data, so it is not a React Query hook.
+- `apiRequest()` reads the current session (`getSession()`) and sends `Authorization: Bearer <access_token>`.
+
+**Server side**
+
+- `requireUser` Express middleware verifies the token **locally** with `jose`: `createRemoteJWKSet(<SUPABASE_URL>/auth/v1/.well-known/jwks.json)` + `jwtVerify` checking issuer `<SUPABASE_URL>/auth/v1` and audience `authenticated`. Missing/invalid → 401. On success `res.locals.userId = payload.sub`.
+- Handlers trust only `res.locals.userId`, never a user id from the body or query.
+- The project must use **asymmetric JWT signing keys** (ES256), not the legacy shared secret.
+- Supabase owns the `auth` schema; Prisma never migrates it. Waypoint's `Profile` is keyed by the Supabase user id (`userId` = `auth.users.id` = JWT `sub`) and is created with an `upsert` on the user's first authenticated request.
+- Never ship the secret / `service_role` key in the app; only the publishable key goes in `EXPO_PUBLIC_*` env vars.
+- Sign-out ends the session, but an issued access token stays valid until expiry (~1h). Acceptable for now; if instant revoke is needed, also check the token's `session_id` exists in `auth.sessions`.
 
 ## Provider adapter contract (agreed)
 
