@@ -1,0 +1,40 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Destination.dc.html": {"h": 844, "is_interactive": true, "title": "2 · Destination", "w": 390, "x": 1410, "y": 0},
+    "Flights.dc.html": {"h": 844, "is_interactive": true, "title": "5 · Flights", "w": 390, "x": 470, "y": 1300},
+    "Home.dc.html": {"h": 844, "is_interactive": true, "title": "0 · Home — my waypoints", "w": 390, "x": 470, "y": 0},
+    "Main.dc.html": {"h": 844, "is_interactive": true, "title": "0 · Log in", "w": 390, "x": 0, "y": 0},
+    "Plan.dc.html": {"h": 844, "is_interactive": true, "title": "4 · Day plan", "w": 390, "x": 0, "y": 1300},
+    "Spots.dc.html": {"h": 844, "is_interactive": true, "title": "3 · Spots, length & dates", "w": 390, "x": 1880, "y": 0},
+    "Stay.dc.html": {"h": 844, "is_interactive": true, "title": "6 · Where to sleep", "w": 390, "x": 940, "y": 1300},
+    "Style.dc.html": {"h": 844, "is_interactive": true, "title": "1 · Trip style", "w": 390, "x": 940, "y": 0},
+    "Summary.dc.html": {"h": 844, "is_interactive": true, "title": "Summary & book", "w": 390, "x": 1410, "y": 1300},
+    "Booked.dc.html": {"h": 844, "is_interactive": true, "title": "Trip planned · book each part", "w": 390, "x": 1880, "y": 1300},
+    "Go1.dc.html": {"h": 844, "is_interactive": true, "title": "Route moment 1 · Style → Destination", "w": 390, "x": 0, "y": 2600},
+    "Go2.dc.html": {"h": 844, "is_interactive": true, "title": "Route moment 2 · Destination → Spots", "w": 390, "x": 470, "y": 2600},
+    "Go3.dc.html": {"h": 844, "is_interactive": true, "title": "Route moment 3 · Spots → Day plan", "w": 390, "x": 940, "y": 2600},
+    "Go4.dc.html": {"h": 844, "is_interactive": true, "title": "Route moment 4 · Day plan → Flights", "w": 390, "x": 1410, "y": 2600},
+    "Go5.dc.html": {"h": 844, "is_interactive": true, "title": "Route moment 5 · Flights → Stay", "w": 390, "x": 1880, "y": 2600},
+    "Go6.dc.html": {"h": 844, "is_interactive": true, "title": "Route moment 6 · Stay → Summary", "w": 390, "x": 2350, "y": 2600},
+    "RouteMoment.dc.html": {"h": 844, "is_interactive": true, "title": "Component · RouteMoment (step tweak)", "w": 390, "x": 2820, "y": 2600}
+  },
+  "createdOnFiles": {"at": "2026-10-07T10:30:00Z", "v": 1},
+  "designSystems": [
+    {"artifact": "https://claude.ai/artifact/LnbFzgyfppQa7tCfgwSNjH", "copiedAt": "2026-10-07T10:30:00Z", "namespace": "waypoint", "title": "Waypoint", "version": "1791324813-05be"}
+  ],
+  "launch": {"view": "canvas"},
+  "notes": {
+    "t1": {"kind": "title1", "maxW": 2270, "text": "Entry → choose what you want", "w": 240, "x": 0, "y": -300},
+    "t2": {"kind": "title1", "maxW": 2270, "text": "Plan, book, done", "w": 240, "x": 0, "y": 1000},
+    "t3": {"kind": "title1", "maxW": 3210, "text": "Route moments — between every step", "w": 240, "x": 0, "y": 2300}
+  },
+  "order": [
+    "Main.dc.html", "Home.dc.html", "Style.dc.html", "Destination.dc.html", "Spots.dc.html",
+    "Plan.dc.html", "Flights.dc.html", "Stay.dc.html", "Summary.dc.html", "Booked.dc.html",
+    "Go1.dc.html", "Go2.dc.html", "Go3.dc.html", "Go4.dc.html", "Go5.dc.html", "Go6.dc.html", "RouteMoment.dc.html"
+  ],
+  "pages": [],
+  "title": "Waypoint MVP"
+}

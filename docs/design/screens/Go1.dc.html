@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waypoint — Route moment 1: style to destination</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/waypoint/tokens.css">
+<link rel="stylesheet" href="ds/waypoint/components/bundle.css">
+<link rel="stylesheet" href="route-moment.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<dc-import name="RouteMoment" step="{{n}}" hint-size="390px,844px"></dc-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return { n: 1 }; }
+}
+</script>
+</body>
+</html>

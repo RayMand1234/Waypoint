@@ -119,7 +119,7 @@ type HotelOffer = {
 }
 ```
 
-Each adapter returns single-source offers (one `provider`, `providerOfferId`, `price`, `deepLink`, `checkedAt` each); `mergeSameHotel` folds offers for the same hotel into this shape.
+Each adapter returns `ProviderHotelOffer`s — one provider each, with its `provider`, `providerOfferId`, `price`, `deepLink` and `checkedAt`. `mergeSameHotel` folds the ones for the same hotel into the `HotelOffer` above, which is the only shape that leaves the service. Flights mirror this (`ProviderFlightOffer` → `FlightOffer`).
 
 `POST /hotels/search` takes the planned stops' coordinates so it can return distance to the plan and favour well-placed stays.
 
@@ -457,12 +457,14 @@ Commands: `npx supabase start` / `stop`, then each service with its own dev scri
 
 ```mermaid
 flowchart LR
-  P0["Phase 0 · Foundation<br/>monorepo, contracts, server-kit,<br/>auth, trips service, design tokens"]
+  P0["Phase 0 · Foundation<br/>monorepo, contracts, server-kit,<br/>auth, trips service, design system"]
   P1["Phase 1 · MVP on fake + sandbox data<br/>all 6 steps end to end,<br/>fake providers, liteAPI sandbox,<br/>planner algorithm + LLM text"]
   P2["Phase 2 · Beta with real data<br/>liteAPI production, Aviasales Data API,<br/>jobs service, Sentry + PostHog,<br/>Supabase paid plan + backups"]
   P3["Phase 3 · Growth<br/>Booking.com / Agoda / Expedia adapters,<br/>live flight search, gateway,<br/>Redis if measured"]
   P0 --> P1 --> P2 --> P3
 ```
+
+Phases 0 and 1 are broken into parallel tracks, with owned paths and done-states, in `docs/build-plan.md`.
 
 Apply to Booking.com, Agoda, Expedia, the Aviasales Search API and Kiwi.com **now**: approvals take time, and each one becomes a Phase 3 adapter.
 

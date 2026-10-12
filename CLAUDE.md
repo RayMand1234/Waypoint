@@ -4,11 +4,13 @@ Mobile-first app that plans a whole trip in under five minutes: trip style → d
 
 **Architecture doc:** `docs/architecture.md` — system map, each service's routes and data, the user flow → backend calls, data model, failure handling, roadmap. Read it before adding a service, route or table, and update it in the same commit when one changes.
 
+**Current phase: Phase 0 — Foundation.** What to build, in which order, and how several agents split the work: `docs/build-plan.md`. Work on one track at a time and stay inside its owned paths.
+
 Shared engineering rules come from SAPI, mounted at `.claude/` (git submodule). This file supplies what SAPI leaves to each app (see the last section of `.claude/CLAUDE.md`). On app-specific details this file wins; on work culture and the engineering baseline, SAPI wins.
 
 ## Product rules that shape the code
 
-- **Plan and compare only (years 1–2).** Waypoint never takes payment or books anything. Each part is booked on the partner site via a deep link (flight → Skyscanner, stay → Booking.com, tickets → official sites).
+- **Plan and compare only (years 1–2).** Waypoint never takes payment or books anything. Each part is booked on the partner site via a deep link: the chosen offer's own `deepLink`, from whichever provider supplied it (e.g. Aviasales for flights, liteAPI for stays), labelled with that site's name. Tickets link to official sites.
 - **No scraping** of Booking, Trivago, Skyscanner or similar. Data comes only from official APIs and affiliate programs.
 - **Ranking is "best value", never "who pays more".** Anything paid is labelled "Sponsored".
 - **Prices may be cached.** Every price shown carries its age ("checked 3h ago") and "final price confirmed on site".
@@ -59,10 +61,12 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 Every external offer source (hotels, flights, later tickets) follows this shape. Shown for hotels; flights mirror it (`FlightProvider`, `searchAllFlights`).
 
 ```ts
-// hotels/types.ts — Waypoint's own shapes; no provider type leaks past an adapter
+// Waypoint's own shapes live in @waypoint/contracts; no provider type leaks past an adapter.
+// ProviderHotelOffer = one offer from ONE provider (adapter output).
+// HotelOffer        = one hotel after merging, with every provider's price in `sources` (API output).
 export type HotelProvider = {
   readonly id: ProviderId
-  readonly searchHotels: (query: HotelQuery, signal: AbortSignal) => Promise<ReadonlyArray<HotelOffer>>
+  readonly searchHotels: (query: HotelQuery, signal: AbortSignal) => Promise<ReadonlyArray<ProviderHotelOffer>>
 }
 
 // hotels/searchAllHotels.ts — the one entry point the rest of the backend calls
@@ -72,8 +76,8 @@ export const searchAllHotels =
     const settled = await Promise.allSettled(
       providers.map((p) => p.searchHotels(query, AbortSignal.timeout(PROVIDER_TIMEOUT_MS)))
     )
-    const { offers, errors } = collectResults(providers, settled)   // pure
-    return { offers: rankByValue(mergeSameHotel(offers)), errors }  // pure
+    const { offers, errors } = collectResults(providers, settled)   // pure: ProviderHotelOffer[] + ProviderError[]
+    return { offers: rankByValue(mergeSameHotel(offers)), errors }  // pure: HotelOffer[] (merged, ranked)
   }
 
 // composition root — changing source = editing this list
@@ -83,10 +87,10 @@ const searchHotels = searchAllHotels([liteApiProvider])
 Rules:
 
 1. **A provider is a record of functions, not a class.** One folder per provider (`hotels/providers/liteapi/`), exporting one `HotelProvider` value.
-2. **Adapters translate.** Each adapter Zod-parses the raw response and maps it to Waypoint's `HotelOffer` / `FlightOffer`. Nothing outside the adapter folder imports provider types, SDKs or field names. Adapters parse, never cast.
+2. **Adapters translate.** Each adapter Zod-parses the raw response and maps it to Waypoint's `ProviderHotelOffer` / `ProviderFlightOffer`. Nothing outside the adapter folder imports provider types, SDKs or field names. Adapters parse, never cast.
 3. **I/O only in adapters.** Collecting results, matching the same hotel across providers (`mergeSameHotel`: normalized name + distance threshold), keeping the lowest price, and value scoring are pure functions with their own tests.
 4. **One failing source never fails the search.** `Promise.allSettled` + a per-provider timeout; failures come back as typed `ProviderError`s beside the offers, so the UI can show partial results.
-5. **Every offer carries** `provider`, `providerOfferId`, `checkedAt` (for "checked 3h ago") and `deepLink`.
+5. **Two offer shapes, never mixed up.** Every `ProviderHotelOffer` / `ProviderFlightOffer` carries `provider`, `providerOfferId`, `price`, `checkedAt` (for "checked 3h ago") and `deepLink`. Merging turns them into `HotelOffer` / `FlightOffer`, which keep each provider's entry in `sources` (feeds "Where we found it") plus `bestPrice` and `value`. Only the merged shapes leave the service.
 6. **Shared contract test + fake provider.** One test suite every adapter must pass. A fake provider returns the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults) so the app and tests run with no API keys.
 7. **Search only, for now.** Waypoint is plan-only, so `HotelProvider` has no prebook/book. If in-app booking is added later, it's a separate `HotelBookingProvider` type implemented only by sources that support it.
 8. **Provider order never affects ranking.** Ranking is value-based only; paid placement is labelled "Sponsored".
@@ -104,23 +108,26 @@ Rules:
 
 ## Design
 
-- Design system and MVP screens are claude.ai artifacts and the source of truth for visuals:
-  - Design system: https://claude.ai/artifact/LnbFzgyfppQa7tCfgwSNjH
-  - MVP canvas: https://claude.ai/artifact/Kx6eZ4tJXEX7g6JnFpGYiG
-- Tokens: midnight `#1E2A5A` primary; sunshine `#FFC83D` only means "best value" (fill with ink text, never text on light); surface `#FAF8F4`; ink `#121726`; ink-muted `#5E5A55`; savings `#1D7A50`; danger `#C2362C`; warning `#A15C00`. Plus Jakarta Sans only; prices use tabular numerals. Spacing 4/8/12/16/24/32/48, radii 8/12/20/full, touch targets ≥ 44px.
+- **The design lives in the repo: `docs/design/`.** Start with `docs/design/README.md` — it says which file answers what, indexes every screen, and lists where newer decisions override the design.
+  - `docs/design/system/` — brand book (`README.md`), `tokens.json` (every token with a usage note), and per-component guidelines + HTML previews.
+  - `docs/design/screens/` — every MVP screen as an HTML artboard (layout, copy, states).
+  - The originals are claude.ai artifacts (design system https://claude.ai/artifact/LnbFzgyfppQa7tCfgwSNjH, canvas https://claude.ai/artifact/Kx6eZ4tJXEX7g6JnFpGYiG); the repo copy is what you build from.
+- The design files are **web markup**: a visual spec to rebuild in React Native, never CSS to port.
+- Key tokens: `midnight-900` `#1E2A5A` primary; `sunshine-400` `#FFC83D` only means "best value" (a fill with `ink` text, never text on light); `surface` `#FAF8F4`; `ink` `#121726`; `ink-muted` `#5E5A55`; `savings` `#1D7A50`; `danger` `#C2362C`; `warning` `#A15C00`. Plus Jakarta Sans only; prices use tabular numerals. Full set and usage: `docs/design/system/tokens.json`.
 - Voice: a competent friend ("we found…"), sentence case, no emoji. Light theme and English only for now.
 - Respect reduce motion: route moments and step animations are skipped when it's on.
 
 ## Styling (Unistyles 3)
 
-- **Tokens are the theme.** `src/theme/tokens.ts` holds the design-system tokens as plain `as const` data (colors, space, radius, font). `src/theme/unistyles.ts` registers them with `StyleSheet.configure` and augments `UnistylesThemes` / `UnistylesBreakpoints` so the theme is fully typed. Only `light` exists for now; dark is added as a second theme object later.
+- **Tokens are the theme.** `src/theme/tokens.ts` mirrors `docs/design/system/tokens.json` name for name (colors, type styles, space, radius, shadow, size) as plain `as const` data. `src/theme/unistyles.ts` registers them with `StyleSheet.configure` and augments `UnistylesThemes` / `UnistylesBreakpoints` so the theme is fully typed. Only `light` exists for now; dark is added as a second theme object later.
 - **Never hard-code a design value.** Colors, spacing, radii and font settings always come from `theme.*`. A literal hex code or spacing number in a component is a bug — add a token instead.
 - **Styles live with their component**, via `StyleSheet.create((theme, rt) => ({ ... }))` imported from `react-native-unistyles` (not `react-native`).
 - **Component states are variants**, activated with `styles.useVariants({...})`; variant names double as the prop's literal-union type. Use `compoundVariants` for combinations instead of conditional style merging.
 - **Data-dependent styles are functions** inside the stylesheet (`card: (isSelected: boolean) => ({...})`), called as `styles.card(isSelected)`. No inline style objects built in render.
 - **Device info comes from `rt`** (safe-area insets, font scale, screen) and breakpoints (`{ xs, md }`) inside the stylesheet — not from extra hooks in the component.
 - **Accessibility:** touch targets ≥ 44 (`minHeight: 44`); font sizes respect `rt.fontScale` (cap where layout would break); prices use `theme.font.tabular`.
-- **Shared design-system components** (Button, Chip, Badge, Input, Route, OfferCard, TripSummaryBar) live in `shared/components/`, each matching the design system artifact.
+- **Shared design-system components** (Button, Chip, Badge, Input, Route, OfferCard, TripSummaryBar) live in `shared/components/`, each built from `docs/design/system/components/<Name>/` (guidelines + preview). Variants and props follow the guideline's names (`kind: 'primary' | 'secondary' | 'ghost'`, `--best` → `isBestValue`, …).
+- **Icons:** `lucide-react-native`, 1.75 stroke, 20/24 px, in `ink` / `ink-muted` (`on-midnight` on midnight fills). No emoji.
 
 
 ## Repo shape (decided: monorepo of independently deployable services)
@@ -129,6 +136,8 @@ Rules:
 waypoint/
   .claude/                SAPI submodule (shared Claude Code config)
   CLAUDE.md               this file
+  docs/                   architecture.md · build-plan.md · design/ (design system + screens)
+  supabase/               local Supabase stack config (CLI)
   package.json            npm workspaces: apps/*, services/*, packages/*
   apps/
     mobile/               Expo app (React Native, Unistyles, React Query)
@@ -160,7 +169,7 @@ waypoint/
 
 **Packages**
 
-- `@waypoint/contracts` is the single definition of every API shape (`HotelOffer`, `FlightOffer`, `Trip`, request/response schemas), organized per service (`contracts/search`, `contracts/trips`, …). Servers validate against it; the app's `apiRequest()` parses responses with it; services parse each other's responses with it. Pure: Zod + types only, no I/O.
+- `@waypoint/contracts` is the single definition of every API shape (`HotelOffer`, `FlightOffer`, `Trip`, request/response schemas), organized per service (`contracts/search`, `contracts/trips`, …). Servers validate against it; the app's `apiRequest()` parses responses with it; services parse each other's responses with it. Pure: Zod schemas, types and tiny pure helpers (`ok`, `err`, `assertNever`); no I/O, no framework imports.
 - `@waypoint/server-kit` holds cross-service plumbing only: `requireUser`, `requireService`, the typed service client, error/health handlers, env parsing. **No business logic.**
 - Provider-specific types (liteAPI, Aviasales) live only inside `services/search/src/**/providers/` — never in `packages/`.
 - Code moves into a package only once two or more services/apps need it.
@@ -187,4 +196,66 @@ Development runs against a **local Supabase stack and fake providers** by defaul
 - **Providers:** the composition root picks providers from env, e.g. `HOTEL_PROVIDERS=fake` (default in development) or `HOTEL_PROVIDERS=liteapi`; same for `FLIGHT_PROVIDERS`. The fake providers return the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults). The planner's LLM step has a fake too (fixed descriptions), selected with `LLM_PROVIDER=fake`. Unknown provider names fail at startup, not at request time.
 - **Env:** each service and the app has a committed `.env.example` with the local defaults; real `.env` / `.env.local` files are git-ignored. Env vars are parsed with Zod at startup (`@waypoint/server-kit`), and a service refuses to start with a missing or invalid value.
 - **Phone vs simulator:** the iOS simulator can use `127.0.0.1`. A real phone can't — point `EXPO_PUBLIC_SUPABASE_URL` and the `EXPO_PUBLIC_*_URL` service URLs at the computer's local network IP.
-- **Ports:** each service has a fixed local port, set in its `.env.example` (proposed: trips 4001, search 4002, planner 4003, jobs 4004).
+- **Ports:** each service has a fixed local port, set in its `.env.example` (trips 4001, search 4002, planner 4003, jobs 4004).
+
+## Toolchain (decided defaults — change here, not ad hoc)
+
+- **Node 24 LTS** (`.nvmrc`), **npm workspaces**, ESM everywhere (`"type": "module"`).
+- **TypeScript:** root `tsconfig.base.json` with SAPI's strict flags (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `noUnusedLocals`, `noUnusedParameters`). Services and packages extend it (`module`/`moduleResolution: NodeNext`); the app extends `expo/tsconfig.base` and adds the same strict flags.
+- **Packages are consumed as TypeScript source** (no build step for `packages/*`); Metro and the services' bundler compile them.
+- **Services:** run in dev with `tsx watch`; built for deploy with `tsup` (bundles workspace packages) into `dist/`. HTTP tests with `supertest` against `createApp(deps)` (no port).
+- **Tests:** **Vitest** for services and packages; **jest-expo** + `@testing-library/react-native` for the app. Tests sit next to the file (`logic.test.ts`).
+- **Lint/format:** ESLint 9 flat config with `typescript-eslint` (strict, type-checked) at the root, Prettier for formatting. Lint never fights Prettier (`eslint-config-prettier`).
+- **App navigation:** **Expo Router** (file-based, `apps/mobile/app/`).
+- **Validation:** Zod everywhere (contracts, env, provider responses).
+- **Root scripts:** `npm run dev` (all services + local Supabase check, via `concurrently`), `npm run typecheck`, `npm run lint`, `npm test`, `npm run format`. Each workspace has the same script names so `npm run <script> --workspaces --if-present` works.
+- Use the latest stable version of each tool at setup time and pin it exactly in `package.json`.
+
+## Code conventions
+
+**Inside a service** (`services/<name>/`):
+
+```
+src/
+  index.ts          composition root ONLY: parseEnv → build deps (Prisma client, providers, service clients) → createApp(deps) → listen
+  app.ts            createApp(deps): Express app with middleware, routers, health, error handler — no listen, no env reads (tests use it)
+  env.ts            Zod env schema for this service
+  <domain>/
+    routes.ts       thin HTTP: parse input with the contract schema → call logic/queries → map Result to status + body
+    queries.ts      Prisma reads/writes only; returns plain objects, never Prisma model types past this file
+    logic.ts        pure functions: no I/O, no Date.now()/random (pass `now` in), fully unit-tested
+    providers/      only where an external source exists (search, planner): one folder per provider + fake/
+    *.test.ts       next to what they test
+prisma/schema.prisma
+.env.example
+```
+
+- **Dependencies are function arguments**, never module-level singletons or a container: `createTripsRouter({ db, now })`. That's how tests swap in fakes.
+- A domain folder exports its public pieces from an `index.ts`; other folders import only from there.
+
+**Inside the app** (`apps/mobile/`):
+
+```
+app/                         Expo Router routes — thin, each renders one feature screen
+src/features/<feature>/
+  components/                presentational + the feature's screen orchestrator
+  hooks/                     use<Feature>.ts — React Query hooks (server data) and local UI state
+  utils/                     <feature>Api.ts (typed calls via apiRequest) + pure helpers
+src/shared/{components,hooks,utils,auth}
+src/theme/{tokens.ts,unistyles.ts}
+```
+
+**Result type** — the one way to return an expected failure (SAPI `clean-code-fp-principles` §5). Lives in `@waypoint/contracts` (`common/result.ts`) and is used by every service and the app:
+
+```ts
+export type Result<T, E> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly error: E }
+export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value })
+export const err = <E>(error: E): Result<never, E> => ({ ok: false, error })
+```
+
+- Error types are discriminated unions with a `type` field (`{ type: 'not-found' } | { type: 'provider-timeout'; provider: ProviderId }`); every `switch` on them ends in `assertNever`.
+- `throw` only for programmer errors and broken invariants; the server-kit error handler turns those into a 500 and reports them.
+- **HTTP error body**, defined in contracts and used by every service: `{ "error": { "code": "<kebab-case>", "message": "<human sentence>" } }`. Routes map each error `type` to a status explicitly.
+- **Money** is `{ amountMinor: number; currency: 'EUR' | … }` (integer minor units), never a float. **Dates** cross the wire as ISO strings, validated by Zod.

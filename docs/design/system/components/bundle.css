@@ -1,0 +1,94 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+/* Waypoint components — plain HTML + wp- classes. Values come from tokens.css. */
+.wp, .wp * { box-sizing: border-box; }
+.wp { font-family: var(--font-sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+.wp-num { font-variant-numeric: tabular-nums; }
+
+/* Button */
+.wp-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: var(--control-h); padding: 0 var(--space-6); border: 1px solid transparent; border-radius: var(--radius-md);
+  font: 600 14px/20px var(--font-sans); cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
+.wp-btn:focus-visible, .wp-chip:focus-visible, .wp-input:focus-visible, .wp-offer:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.wp-btn--primary { background: var(--midnight-900); color: var(--on-midnight); }
+.wp-btn--primary:hover { background: var(--midnight-700); }
+.wp-btn--secondary { background: var(--midnight-100); color: var(--midnight-900); }
+.wp-btn--secondary:hover { border-color: var(--midnight-900); }
+.wp-btn--ghost { background: transparent; color: var(--midnight-900); }
+.wp-btn--ghost:hover { background: var(--midnight-100); }
+.wp-btn--block { width: 100%; }
+.wp-btn[disabled] { background: var(--border); color: var(--ink-muted); cursor: not-allowed; }
+
+/* Chip — filter / multi-select */
+.wp-chip { display: inline-flex; align-items: center; gap: var(--space-1); min-height: 36px; padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-full); background: var(--surface-card);
+  color: var(--ink); font: 600 14px/20px var(--font-sans); cursor: pointer; }
+.wp-chip[aria-pressed="true"] { background: var(--midnight-100); border-color: var(--midnight-900); color: var(--midnight-900); }
+
+/* Badge */
+.wp-badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full); font: 700 11px/16px var(--font-sans); letter-spacing: .06em; text-transform: uppercase; }
+.wp-badge--value { background: var(--sunshine-400); color: var(--ink); }
+.wp-badge--savings { background: var(--savings-100); color: var(--savings); }
+.wp-badge--warning { background: var(--warning-100); color: var(--warning); }
+.wp-badge--danger { background: var(--danger-100); color: var(--danger); }
+.wp-badge--neutral { background: var(--midnight-100); color: var(--midnight-900); }
+
+/* Input */
+.wp-field { display: grid; gap: var(--space-1); }
+.wp-field__label { font: 600 14px/20px var(--font-sans); color: var(--ink); }
+.wp-field__help { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
+.wp-field__error { font: 500 12px/16px var(--font-sans); color: var(--danger); }
+.wp-input { width: 100%; min-height: var(--control-h); padding: 0 var(--space-4); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); background: var(--surface-card); color: var(--ink); font: 400 15px/22px var(--font-sans); }
+.wp-input::placeholder { color: var(--ink-muted); }
+.wp-input[aria-invalid="true"] { border-color: var(--danger); }
+
+/* Route — the waypoint progress: a dotted road, 7 checkpoints (6 steps + Book), a sunshine marker.
+   Consumer sets on the marker: offset-path: path("<same d as the road>"); --wp-from / --wp-to (offset-distance %),
+   and on the trail: --wp-trail-from / --wp-trail-to (100 − percent). Checkpoint k sits at k/6 of the path. */
+.wp-route { position: relative; height: 68px; }
+.wp-route__svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.wp-route__road { fill: none; stroke: var(--border-strong); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 0 7; }
+.wp-route__trail { fill: none; stroke: var(--midnight-900); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 100 100;
+  stroke-dashoffset: var(--wp-trail-to); animation: wp-route-trail .9s cubic-bezier(.5,0,.2,1) .25s both; }
+.wp-route__cp--done { fill: var(--midnight-900); }
+.wp-route__cp--current { fill: var(--surface-card); stroke: var(--midnight-900); stroke-width: 2; }
+.wp-route__cp--next { fill: var(--surface); stroke: var(--border-strong); stroke-width: 2; }
+.wp-route__marker { position: absolute; left: 0; top: 0; width: 16px; height: 16px; border-radius: var(--radius-full);
+  background: var(--sunshine-400); border: 2.5px solid var(--midnight-900); offset-rotate: 0deg; offset-anchor: center;
+  offset-distance: var(--wp-to); animation: wp-route-glide .9s cubic-bezier(.5,0,.2,1) .25s both, wp-route-pulse 2s ease-out 1.4s infinite; }
+.wp-route__label { position: absolute; top: 52px; width: 60px; text-align: center; white-space: nowrap;
+  font: 500 11px/14px var(--font-sans); color: var(--ink-muted); }
+.wp-route__now { position: absolute; width: 100px; text-align: center; white-space: nowrap;
+  font: 700 12px/14px var(--font-sans); color: var(--ink); animation: wp-route-fade .4s ease-out 1s both; }
+@keyframes wp-route-trail { from { stroke-dashoffset: var(--wp-trail-from); } to { stroke-dashoffset: var(--wp-trail-to); } }
+@keyframes wp-route-glide { from { offset-distance: var(--wp-from); } to { offset-distance: var(--wp-to); } }
+@keyframes wp-route-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,200,61,.7); } 100% { box-shadow: 0 0 0 10px rgba(255,200,61,0); } }
+@keyframes wp-route-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .wp-route__trail, .wp-route__marker, .wp-route__now { animation: none; } }
+
+/* Offer card — flight, hotel, insurance, extra */
+.wp-offer { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--surface-card); box-shadow: var(--shadow-card); cursor: pointer; text-align: start; width: 100%; font: inherit; color: inherit; }
+.wp-offer--best { background: var(--sunshine-100); border-color: var(--sunshine-400); }
+.wp-offer[aria-pressed="true"] { border: 2px solid var(--midnight-900); box-shadow: var(--shadow-raised); padding: calc(var(--space-4) - 1px); }
+.wp-offer__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
+.wp-offer__title { font: 600 17px/24px var(--font-sans); margin: 0; }
+.wp-offer__meta { font: 400 15px/22px var(--font-sans); color: var(--ink-muted); margin: 0; }
+.wp-offer__foot { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--space-2); }
+.wp-offer__price { font: 700 18px/24px var(--font-sans); font-variant-numeric: tabular-nums; }
+.wp-offer__unit { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); }
+.wp-delta { font: 600 13px/18px var(--font-sans); color: var(--savings); font-variant-numeric: tabular-nums; }
+.wp-delta--up { color: var(--danger); }
+
+/* Trip summary bar — sticky bottom */
+.wp-summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+  padding: var(--space-3) var(--space-4); background: var(--surface-card); border-top: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0; box-shadow: var(--shadow-bar); }
+.wp-summary__info { display: grid; gap: 2px; min-width: 0; }
+.wp-summary__trip { font: 500 12px/16px var(--font-sans); color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wp-summary__total { font: 800 28px/34px var(--font-sans); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.wp-summary__steps { display: flex; gap: var(--space-1); }
+.wp-summary__dot { width: 8px; height: 8px; border-radius: var(--radius-full); background: var(--border-strong); }
+.wp-summary__dot--done { background: var(--savings); }

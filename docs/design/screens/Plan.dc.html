@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waypoint — Step 4, day plan</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/waypoint/tokens.css">
+<link rel="stylesheet" href="ds/waypoint/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>body{margin:0}a{color:var(--midnight-900)}a:hover{color:var(--midnight-700)}
+.wp-route-trail{stroke-dasharray:100 100;stroke-dashoffset:50;animation:wp-trail .9s cubic-bezier(.5,0,.2,1) .25s both}
+@keyframes wp-trail{from{stroke-dashoffset:66.667}to{stroke-dashoffset:50}}
+.wp-route-marker{position:absolute;left:0;top:0;width:16px;height:16px;box-sizing:border-box;border-radius:999px;background:#ffc83d;border:2.5px solid #1e2a5a;offset-path:path("M12 28 C39.5 28 39.5 42 67 42 C94.5 42 94.5 28 122 28 C149.5 28 149.5 42 177 42 C204.5 42 204.5 28 232 28 C259.5 28 259.5 42 287 42 C314.5 42 314.5 28 342 28");offset-rotate:0deg;offset-anchor:center;offset-distance:50%;animation:wp-glide .9s cubic-bezier(.5,0,.2,1) .25s both,wp-pulse 2s ease-out 1.4s infinite}
+@keyframes wp-glide{from{offset-distance:33.333%}to{offset-distance:50%}}
+@keyframes wp-pulse{0%{box-shadow:0 0 0 0 rgba(255,200,61,.7)}100%{box-shadow:0 0 0 10px rgba(255,200,61,0)}}
+.wp-route-now{animation:wp-fade .4s ease-out 1s both}
+@keyframes wp-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.wp-route-trail,.wp-route-now{animation:none}
+.wp-route-marker{animation:wp-pulse 2s ease-out .6s infinite}
+main>*{animation:wp-in .5s cubic-bezier(.2,.8,.2,1) both}
+main>*:nth-child(1){animation-delay:.08s}main>*:nth-child(2){animation-delay:.16s}main>*:nth-child(3){animation-delay:.24s}main>*:nth-child(4){animation-delay:.32s}main>*:nth-child(5){animation-delay:.4s}main>*:nth-child(6){animation-delay:.48s}
+@keyframes wp-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.wp-route-trail,.wp-route-marker,.wp-route-now,main>*{animation:none}}
+</style>
+</helmet>
+<div class="wp" style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 0">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <a href="Spots.dc.html" aria-label="Back" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--ink)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+      <span style="font: 600 14px/20px var(--font-sans); color: var(--ink)">Lisbon · 12–16 May</span>
+      <button aria-label="Show on map" style="width: 44px; height: 44px; margin-right: -10px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 12px; background: transparent; color: var(--ink); cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"></path></svg></button>
+    </div>
+    <div role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="4" aria-label="Step 4 of 6, Day plan" style="position: relative; height: 68px">
+      <svg width="358" height="68" viewBox="0 0 358 68" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible">
+        <path d="M12 28 C39.5 28 39.5 42 67 42 C94.5 42 94.5 28 122 28 C149.5 28 149.5 42 177 42 C204.5 42 204.5 28 232 28 C259.5 28 259.5 42 287 42 C314.5 42 314.5 28 342 28" fill="none" stroke="#8c857a" stroke-width="2" stroke-linecap="round" stroke-dasharray="0 7"></path>
+        <path class="wp-route-trail" d="M12 28 C39.5 28 39.5 42 67 42 C94.5 42 94.5 28 122 28 C149.5 28 149.5 42 177 42 C204.5 42 204.5 28 232 28 C259.5 28 259.5 42 287 42 C314.5 42 314.5 28 342 28" pathLength="100" fill="none" stroke="#1e2a5a" stroke-width="3" stroke-linecap="round"></path>
+        <circle cx="12" cy="28" r="5" fill="#1e2a5a"></circle>
+        <circle cx="67" cy="42" r="5" fill="#1e2a5a"></circle>
+        <circle cx="122" cy="28" r="5" fill="#1e2a5a"></circle>
+        <circle cx="177" cy="42" r="6" fill="#ffffff" stroke="#1e2a5a" stroke-width="2"></circle>
+        <circle cx="232" cy="28" r="5" fill="#faf8f4" stroke="#8c857a" stroke-width="2"></circle>
+        <circle cx="287" cy="42" r="5" fill="#faf8f4" stroke="#8c857a" stroke-width="2"></circle>
+        <circle cx="342" cy="28" r="7" fill="#faf8f4" stroke="#8c857a" stroke-width="2"></circle><circle cx="342" cy="28" r="2.5" fill="#8c857a"></circle>
+      </svg>
+      <span class="wp-route-marker"></span>
+      <span style="position: absolute; top: 52px; left: -4px; font: 500 11px/14px var(--font-sans); color: var(--ink-muted); white-space: nowrap">Views +2</span>
+      <span style="position: absolute; top: 52px; left: 37px; width: 60px; text-align: center; font: 500 11px/14px var(--font-sans); color: var(--ink-muted); white-space: nowrap">Lisbon</span>
+      <span style="position: absolute; top: 52px; left: 92px; width: 60px; text-align: center; font: 500 11px/14px var(--font-sans); color: var(--ink-muted); white-space: nowrap">5 days</span>
+      <span class="wp-route-now" style="position: absolute; top: 16px; left: 127px; width: 100px; text-align: center; font: 700 12px/14px var(--font-sans); color: var(--ink); white-space: nowrap">Day plan</span>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 20px 0 16px; overflow: hidden">
+    <div style="display: flex; flex-direction: column; gap: 4px; padding: 0 16px">
+      <h1 style="margin: 0; font: 700 24px/32px var(--font-sans); letter-spacing: -0.01em; color: var(--ink)">Your 5-day plan</h1>
+      <p style="margin: 0; font: 400 15px/22px var(--font-sans); color: var(--ink-muted)">We built it around your 6 spots. Swap or remove anything.</p>
+    </div>
+
+    <div role="tablist" aria-label="Days" style="display: flex; gap: 8px; padding: 0 16px; overflow: hidden">
+      <sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+        <button role="tab" aria-selected="{{d.on}}" onClick="{{d.pick}}" style="{{d.style}}">
+          <span style="font: 700 15px/20px var(--font-sans)">Day {{d.n}}</span>
+          <span style="{{d.subStyle}}">{{d.date}}</span>
+        </button>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 16px">
+      <h2 style="margin: 0; font: 600 17px/24px var(--font-sans); color: var(--ink)">{{dayTitle}}</h2>
+      <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">{{dayMeta}}</span>
+    </div>
+
+    <ol style="list-style: none; margin: 0; padding: 0 16px; display: flex; flex-direction: column">
+      <sc-for list="{{stops}}" as="s" hint-placeholder-count="5">
+        <li style="display: flex; flex-direction: column">
+          <sc-if value="{{s.travel}}" hint-placeholder-val="{{false}}">
+            <div style="display: flex; align-items: center; gap: 12px; height: 28px">
+              <span style="width: 44px"></span>
+              <span style="width: 16px; display: flex; justify-content: center; align-self: stretch"><span style="width: 2px; background: repeating-linear-gradient(#8c857a 0 4px, transparent 4px 8px)"></span></span>
+              <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">{{s.travel}}</span>
+            </div>
+          </sc-if>
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="width: 44px; font: 600 13px/18px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink)">{{s.time}}</span>
+            <span style="{{s.dot}}"></span>
+            <div style="{{s.card}}">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+                <span style="font: 600 15px/22px var(--font-sans); color: var(--ink)">{{s.name}}</span>
+                <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">{{s.meta}}</span>
+              </div>
+              <sc-if value="{{s.editable}}" hint-placeholder-val="{{true}}">
+                <button aria-label="Swap {{s.name}}" style="width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; background: transparent; color: var(--ink-muted); cursor: pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"></path></svg></button>
+              </sc-if>
+            </div>
+          </div>
+        </li>
+      </sc-for>
+    </ol>
+  </main>
+
+  <div class="wp-summary">
+    <div class="wp-summary__info">
+      <div class="wp-summary__trip">Lisbon · 12–16 May · 2 travelers</div>
+      <div class="wp-summary__total">€ 118</div>
+      <div class="wp-summary__steps" aria-label="3 of 6 steps done"><span class="wp-summary__dot wp-summary__dot--done"></span><span class="wp-summary__dot wp-summary__dot--done"></span><span class="wp-summary__dot wp-summary__dot--done"></span><span class="wp-summary__dot"></span><span class="wp-summary__dot"></span><span class="wp-summary__dot"></span></div>
+    </div>
+    <a class="wp-btn wp-btn--primary" href="Go4.dc.html" style="text-decoration: none">Continue to flights</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { day: 2 }; }
+  renderVals() {
+    var self = this;
+    var plan = {
+      1: { date: '12 May', title: 'Arrive & Baixa', meta: '3 stops · easy', stops: [
+        { time: '11:25', name: 'Land at Lisbon (LIS)', meta: 'Flight · TAP direct', kind: 'fixed' },
+        { time: '13:00', name: 'Check in', meta: 'Your stay · chosen in step 6', kind: 'fixed', travel: 'Metro · 25 min' },
+        { time: '15:00', name: 'Praça do Comércio', meta: 'Culture · 45m · Free', travel: '10 min walk' },
+        { time: '16:30', name: 'Time Out Market', meta: 'Food · 1h 30m', travel: '15 min walk' },
+        { time: '19:00', name: 'Miradouro de São Pedro de Alcântara', meta: 'Views · Sunset · Free', travel: 'Funicular · 10 min' } ] },
+      2: { date: '13 May', title: 'Alfama & views', meta: '5 stops · balanced', stops: [
+        { time: '09:30', name: 'Castelo de São Jorge', meta: 'Views · Culture · 2h · Ticket est. €15 pp' },
+        { time: '12:00', name: 'Miradouro de Santa Luzia', meta: 'Views · 30m · Free', travel: '8 min walk' },
+        { time: '13:00', name: 'Lunch in Alfama', meta: 'Food · 3 picks nearby', travel: '5 min walk' },
+        { time: '15:00', name: 'Tram 28 to Graça', meta: 'Culture · 40m', travel: '6 min walk' },
+        { time: '19:15', name: 'Miradouro da Senhora do Monte', meta: 'Views · Sunset · Free', travel: '12 min walk' } ] },
+      3: { date: '14 May', title: 'Belém', meta: '4 stops · balanced', stops: [
+        { time: '09:30', name: 'Jerónimos Monastery', meta: 'Culture · 1h 30m' },
+        { time: '11:15', name: 'Pastéis de Belém', meta: 'Food · 30m', travel: '3 min walk' },
+        { time: '12:00', name: 'Belém Tower', meta: 'Culture · Views · 1h', travel: '15 min walk' },
+        { time: '15:00', name: 'MAAT & riverside walk', meta: 'Culture · Views · 2h', travel: '12 min walk' } ] },
+      4: { date: '15 May', title: 'Sintra day trip', meta: '4 stops · full day', stops: [
+        { time: '08:30', name: 'Train Rossio → Sintra', meta: 'Transport · 40m', kind: 'fixed' },
+        { time: '10:00', name: 'Pena Palace', meta: 'Views · Culture · 3h', travel: 'Bus · 15 min' },
+        { time: '15:00', name: 'Quinta da Regaleira', meta: 'Culture · 1h 30m', travel: 'Bus · 15 min' },
+        { time: '18:45', name: 'Cabo da Roca', meta: 'Views · Sunset · Free', travel: 'Bus · 40 min' } ] },
+      5: { date: '16 May', title: 'Easy last day', meta: '2 stops · relaxed', stops: [
+        { time: '10:00', name: 'LX Factory', meta: 'Food · Culture · 2h' },
+        { time: '14:30', name: 'Head to the airport', meta: 'Metro · 25 min', kind: 'fixed', travel: 'Tram · 20 min' },
+        { time: '17:30', name: 'Fly home', meta: 'Flight · TAP direct', kind: 'fixed', travel: '' } ] }
+    };
+    var days = [1, 2, 3, 4, 5].map(function (n) {
+      var on = self.state.day === n;
+      return { n: n, date: plan[n].date, on: on, pick: function () { self.setState({ day: n }); },
+        style: 'flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:52px;padding:6px 14px;border-radius:12px;cursor:pointer;font-family:var(--font-sans);' + (on ? 'background:#1e2a5a;color:#ffffff;border:1px solid #1e2a5a;' : 'background:#ffffff;color:#121726;border:1px solid #8c857a;'),
+        subStyle: 'font:500 12px/16px var(--font-sans);' + (on ? 'color:#e7eaf5;' : 'color:#5e5a55;') };
+    });
+    var d = plan[self.state.day];
+    var stops = d.stops.map(function (s, i) {
+      var fixed = s.kind === 'fixed';
+      return Object.assign({}, s, {
+        travel: i === 0 ? '' : (s.travel || ''),
+        editable: !fixed,
+        dot: 'width:16px;height:16px;flex:none;border-radius:999px;box-sizing:border-box;' + (fixed ? 'background:#ffffff;border:2px solid #1e2a5a;' : 'background:#ffc83d;border:2px solid #1e2a5a;'),
+        card: 'flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 12px;border-radius:12px;' + (fixed ? 'background:transparent;border:1px dashed #e6e1d8;' : 'background:#ffffff;border:1px solid #e6e1d8;box-shadow:0 1px 2px rgba(18,23,38,0.06);')
+      });
+    });
+    return { days: days, stops: stops, dayTitle: d.title, dayMeta: d.meta };
+  }
+}
+</script>
+</body>
+</html>

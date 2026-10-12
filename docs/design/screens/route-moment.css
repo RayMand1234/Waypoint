@@ -1,0 +1,74 @@
+/* Waypoint — the route moment between steps. Timing is deliberate: ~3s, the trip is being built. */
+.rm { position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #1e2a5a; color: #ffffff; overflow: hidden; font-family: var(--font-sans); }
+
+.rm-road { fill: none; stroke: #6f79a6; stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 0 9; }
+.rm-trail { fill: none; stroke: #ffc83d; stroke-width: 3.5; stroke-linecap: round; stroke-dasharray: 100 100; animation-duration: 1.4s; animation-timing-function: cubic-bezier(.45,0,.2,1); animation-delay: .6s; animation-fill-mode: both; }
+.rm-trail.s1 { stroke-dashoffset: 83.333; animation-name: rm-t1; }
+.rm-trail.s2 { stroke-dashoffset: 66.667; animation-name: rm-t2; }
+.rm-trail.s3 { stroke-dashoffset: 50; animation-name: rm-t3; }
+.rm-trail.s4 { stroke-dashoffset: 33.333; animation-name: rm-t4; }
+.rm-trail.s5 { stroke-dashoffset: 16.667; animation-name: rm-t5; }
+.rm-trail.s6 { stroke-dashoffset: 0; animation-name: rm-t6; }
+@keyframes rm-t1 { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 83.333; } }
+@keyframes rm-t2 { from { stroke-dashoffset: 83.333; } to { stroke-dashoffset: 66.667; } }
+@keyframes rm-t3 { from { stroke-dashoffset: 66.667; } to { stroke-dashoffset: 50; } }
+@keyframes rm-t4 { from { stroke-dashoffset: 50; } to { stroke-dashoffset: 33.333; } }
+@keyframes rm-t5 { from { stroke-dashoffset: 33.333; } to { stroke-dashoffset: 16.667; } }
+@keyframes rm-t6 { from { stroke-dashoffset: 16.667; } to { stroke-dashoffset: 0; } }
+
+.rm-marker { position: absolute; left: 0; top: 0; z-index: 3; width: 22px; height: 22px; box-sizing: border-box; border-radius: 999px; background: #ffc83d; border: 3px solid #ffffff;
+  offset-path: path("M130 140 C130 176 260 176 260 212 C260 248 130 248 130 284 C130 320 260 320 260 356 C260 392 130 392 130 428 C130 464 260 464 260 500 C260 536 130 536 130 572");
+  offset-rotate: 0deg; offset-anchor: center;
+  animation-duration: 1.4s, 1.8s; animation-timing-function: cubic-bezier(.45,0,.2,1), ease-out; animation-delay: .6s, 2.1s; animation-iteration-count: 1, infinite; animation-fill-mode: both, none; }
+.rm-marker.s1 { offset-distance: 16.667%; animation-name: rm-g1, rm-pulse; }
+.rm-marker.s2 { offset-distance: 33.333%; animation-name: rm-g2, rm-pulse; }
+.rm-marker.s3 { offset-distance: 50%; animation-name: rm-g3, rm-pulse; }
+.rm-marker.s4 { offset-distance: 66.667%; animation-name: rm-g4, rm-pulse; }
+.rm-marker.s5 { offset-distance: 83.333%; animation-name: rm-g5, rm-pulse; }
+.rm-marker.s6 { offset-distance: 100%; animation-name: rm-g6, rm-pulse; }
+@keyframes rm-g1 { from { offset-distance: 0%; } to { offset-distance: 16.667%; } }
+@keyframes rm-g2 { from { offset-distance: 16.667%; } to { offset-distance: 33.333%; } }
+@keyframes rm-g3 { from { offset-distance: 33.333%; } to { offset-distance: 50%; } }
+@keyframes rm-g4 { from { offset-distance: 50%; } to { offset-distance: 66.667%; } }
+@keyframes rm-g5 { from { offset-distance: 66.667%; } to { offset-distance: 83.333%; } }
+@keyframes rm-g6 { from { offset-distance: 83.333%; } to { offset-distance: 100%; } }
+@keyframes rm-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,200,61,.6); } 100% { box-shadow: 0 0 0 16px rgba(255,200,61,0); } }
+
+/* checkpoints */
+.rm-cp { position: absolute; z-index: 2; box-sizing: border-box; border-radius: 999px; transform: translate(-50%, -50%); }
+.rm-cp--done { width: 16px; height: 16px; background: #ffc83d; }
+.rm-cp--just { width: 26px; height: 26px; background: #ffc83d; display: flex; align-items: center; justify-content: center; animation: rm-pop .45s cubic-bezier(.3,1.5,.5,1) .15s both; }
+.rm-cp--target { width: 20px; height: 20px; background: #1e2a5a; border: 2.5px solid #ffffff; }
+.rm-cp--todo { width: 14px; height: 14px; background: #1e2a5a; border: 2px solid #8f98c2; }
+.rm-cp--finish { width: 20px; height: 20px; background: #1e2a5a; border: 2px solid #8f98c2; display: flex; align-items: center; justify-content: center; }
+.rm-cp--finish::after { content: ""; width: 7px; height: 7px; border-radius: 999px; background: #8f98c2; }
+@keyframes rm-pop { from { opacity: 0; transform: translate(-50%, -50%) scale(.3); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+
+/* labels beside checkpoints */
+.rm-label { position: absolute; width: 104px; display: flex; flex-direction: column; }
+.rm-label__top { font: 600 11px/16px var(--font-sans); color: #b8bfdc; }
+.rm-label__main { font: 600 15px/20px var(--font-sans); color: #ffffff; }
+.rm-label--todo .rm-label__main { font: 500 13px/18px var(--font-sans); color: #b8bfdc; }
+.rm-label--next .rm-label__top { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #ffc83d; }
+.rm-label--next { animation: rm-fade .5s ease-out 2s both; }
+.rm-label--just .rm-label__main { animation: rm-fade .4s ease-out .35s both; }
+@keyframes rm-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* the "building your trip" sheet */
+.rm-sheet { position: absolute; left: 16px; right: 16px; bottom: 24px; z-index: 4; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 20px; background: #ffffff; color: #121726; box-shadow: 0 4px 16px rgba(18,23,38,0.10); animation: rm-up .5s cubic-bezier(.2,.8,.2,1) .35s both; }
+@keyframes rm-up { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+.rm-tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rm-task { display: flex; align-items: center; gap: 10px; font: 500 14px/20px var(--font-sans); color: #121726; }
+.rm-task__icon { position: relative; width: 20px; height: 20px; flex: none; }
+.rm-spin { position: absolute; inset: 0; box-sizing: border-box; border-radius: 999px; border: 2px solid #e6e1d8; border-top-color: #1e2a5a; animation: rm-spin .8s linear infinite; }
+.rm-done { position: absolute; inset: 0; border-radius: 999px; background: #1d7a50; display: flex; align-items: center; justify-content: center; animation: rm-check .3s cubic-bezier(.3,1.5,.5,1) both; }
+.rm-task:nth-child(1) .rm-done { animation-delay: 1.1s; }
+.rm-task:nth-child(2) .rm-done { animation-delay: 1.8s; }
+.rm-task:nth-child(3) .rm-done { animation-delay: 2.5s; }
+@keyframes rm-spin { to { transform: rotate(360deg); } }
+@keyframes rm-check { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+.rm-go { animation: rm-fade .4s ease-out 2.9s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rm-trail, .rm-marker, .rm-cp--just, .rm-label--next, .rm-label--just .rm-label__main, .rm-sheet, .rm-done, .rm-go, .rm-spin { animation: none; }
+}

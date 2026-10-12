@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waypoint — Route moment</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/waypoint/tokens.css">
+<link rel="stylesheet" href="ds/waypoint/components/bundle.css">
+<link rel="stylesheet" href="route-moment.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="rm wp" style="font-family: var(--font-sans); color: #ffffff">
+  <sc-if value="{{run}}" hint-placeholder-val="{{true}}">
+    <div style="position: absolute; inset: 0">
+      <div style="position: absolute; left: 24px; right: 72px; top: 36px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font: 700 11px/16px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: #ffc83d">Checkpoint {{n}} of 6</span>
+        <h1 style="margin: 0; font: 700 26px/34px var(--font-sans); letter-spacing: -0.02em; color: #ffffff">{{title}}</h1>
+      </div>
+
+      <svg width="390" height="844" viewBox="0 0 390 844" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+        <path class="rm-road" d="M130 140 C130 176 260 176 260 212 C260 248 130 248 130 284 C130 320 260 320 260 356 C260 392 130 392 130 428 C130 464 260 464 260 500 C260 536 130 536 130 572"></path>
+        <path class="{{trailCls}}" pathLength="100" d="M130 140 C130 176 260 176 260 212 C260 248 130 248 130 284 C130 320 260 320 260 356 C260 392 130 392 130 428 C130 464 260 464 260 500 C260 536 130 536 130 572"></path>
+      </svg>
+
+      <sc-for list="{{points}}" as="p" hint-placeholder-count="7">
+        <span class="{{p.cls}}" style="{{p.pos}}">
+          <sc-if value="{{p.just}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1e2a5a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></sc-if>
+        </span>
+      </sc-for>
+      <span class="{{markerCls}}"></span>
+
+      <sc-for list="{{labels}}" as="l" hint-placeholder-count="7">
+        <div class="{{l.cls}}" style="{{l.pos}}">
+          <span class="rm-label__top">{{l.top}}</span>
+          <span class="rm-label__main">{{l.main}}</span>
+        </div>
+      </sc-for>
+
+      <div class="rm-sheet">
+        <span style="font: 600 15px/22px var(--font-sans); color: #121726">{{sheetTitle}}</span>
+        <ul class="rm-tasks">
+          <sc-for list="{{tasks}}" as="t" hint-placeholder-count="3">
+            <li class="rm-task">
+              <span class="rm-task__icon"><span class="rm-spin"></span><span class="rm-done"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span></span>
+              <span>{{t}}</span>
+            </li>
+          </sc-for>
+        </ul>
+        <a class="wp-btn wp-btn--primary wp-btn--block rm-go" href="{{href}}" style="text-decoration: none">{{goLabel}}</a>
+      </div>
+    </div>
+  </sc-if>
+  <button aria-label="Replay" onClick="{{replay}}" style="position: absolute; right: 12px; top: 28px; z-index: 5; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 12px; background: transparent; color: #b8bfdc; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"></path></svg></button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"step":{"editor":"enum","options":[1,2,3,4,5,6],"default":2,"tsType":"number"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { run: true }; }
+  renderVals() {
+    var self = this;
+    var n = Number(this.props.step != null ? this.props.step : 2);
+    if (!(n >= 1 && n <= 6)) n = 2;
+    var cps = [
+      { name: 'Trip style', pick: 'Views +2' },
+      { name: 'Destination', pick: 'Lisbon' },
+      { name: 'Spots & dates', pick: '5 days' },
+      { name: 'Day plan', pick: '16 stops' },
+      { name: 'Flights', pick: 'TAP direct' },
+      { name: 'Stay', pick: 'Alfama' },
+      { name: 'Book', pick: '€ 880' }
+    ];
+    var moments = {
+      1: { title: 'Views, culture and food.', sheet: 'Finding where to go', tasks: ['Matching destinations to your styles', 'Checking flights from Tel Aviv', 'Estimating a total for each'], go: 'Choose your destination', href: 'Destination.dc.html' },
+      2: { title: 'Lisbon it is.', sheet: 'Getting to know Lisbon', tasks: ['Finding the top spots for you', 'Checking what May is like', 'Grouping spots by area'], go: 'Pick spots & dates', href: 'Spots.dc.html' },
+      3: { title: '5 days, 6 spots.', sheet: 'Building your day plan', tasks: ['Grouping spots by neighbourhood', 'Ordering stops by best time of day', 'Adding travel time between stops'], go: 'See your plan', href: 'Plan.dc.html' },
+      4: { title: 'Your days are set.', sheet: 'Finding your flights', tasks: ['Searching flights that fit day 1 and 5', 'Weighing price against quality', 'Including bags and fees'], go: 'Choose your flight', href: 'Flights.dc.html' },
+      5: { title: 'Flying TAP, direct.', sheet: 'Finding where to sleep', tasks: ['Looking for stays near your stops', 'Measuring distance to each day', 'Checking free cancellation'], go: 'Choose your stay', href: 'Stay.dc.html' },
+      6: { title: 'Sleeping in Alfama.', sheet: 'Putting your trip together', tasks: ['Adding up flights, stay and tickets', 'Comparing with average prices', 'Re-checking availability'], go: 'Review your trip', href: 'Summary.dc.html' }
+    };
+    var m = moments[n];
+    var points = [], labels = [];
+    cps.forEach(function (c, k) {
+      var x = k % 2 === 0 ? 130 : 260, y = 140 + 72 * k;
+      var st = k < n - 1 ? 'done' : (k === n - 1 ? 'just' : (k === n ? 'target' : (k === 6 ? 'finish' : 'todo')));
+      points.push({ cls: 'rm-cp rm-cp--' + st, pos: 'left:' + x + 'px;top:' + y + 'px;', just: st === 'just' });
+      var left = k % 2 === 0;
+      var pos = (left ? 'left:8px;text-align:right;align-items:flex-end;' : 'left:282px;') + 'top:' + (y - (st === 'todo' || st === 'finish' ? 9 : 18)) + 'px;';
+      var cls = 'rm-label', top = c.name, main = c.pick;
+      if (st === 'just') cls += ' rm-label--just';
+      if (st === 'target') { cls += ' rm-label--next'; top = 'Next stop'; main = c.name; }
+      if (st === 'todo' || st === 'finish') { cls += ' rm-label--todo'; top = ''; main = c.name; }
+      labels.push({ cls: cls, pos: pos, top: top, main: main });
+    });
+    return {
+      n: n, title: m.title, sheetTitle: m.sheet, tasks: m.tasks, goLabel: m.go, href: m.href,
+      points: points, labels: labels,
+      trailCls: 'rm-trail s' + n, markerCls: 'rm-marker s' + n,
+      run: this.state.run,
+      replay: function () { self.setState({ run: false }, function () { setTimeout(function () { self.setState({ run: true }); }, 40); }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waypoint — Trip ready to book</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/waypoint/tokens.css">
+<link rel="stylesheet" href="ds/waypoint/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap">
+<style>body{margin:0}a{color:var(--midnight-900)}a:hover{color:var(--midnight-700)}
+.bk-hero>*{animation:bk-in .5s cubic-bezier(.2,.8,.2,1) both}
+.bk-hero>*:nth-child(2){animation-delay:.1s}.bk-hero>*:nth-child(3){animation-delay:.2s}.bk-hero>*:nth-child(4){animation-delay:.3s}
+.bk-check{animation:bk-pop .5s cubic-bezier(.3,1.5,.5,1) .1s both}
+.bk-list>*{animation:bk-in .5s cubic-bezier(.2,.8,.2,1) both}
+.bk-list>*:nth-child(1){animation-delay:.35s}.bk-list>*:nth-child(2){animation-delay:.42s}.bk-list>*:nth-child(3){animation-delay:.49s}.bk-list>*:nth-child(4){animation-delay:.56s}.bk-list>*:nth-child(5){animation-delay:.63s}
+@keyframes bk-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes bk-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+.bk-go:focus-visible,.bk-tick:focus-visible{outline:2px solid #33437f;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.bk-hero>*,.bk-check,.bk-list>*{animation:none}}
+</style>
+</helmet>
+<div class="wp" style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); display: flex; flex-direction: column; overflow: hidden">
+  <section class="bk-hero" style="position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 10px; padding: 20px 24px 48px; background: var(--midnight-900); color: var(--on-midnight); border-radius: 0 0 50% 50% / 0 0 40px 40px">
+    
+    <span class="bk-check" style="position: relative; width: 48px; height: 48px; border-radius: 999px; background: var(--sunshine-400); display: flex; align-items: center; justify-content: center; margin-top: 28px; align-self: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1e2a5a" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></span>
+    <h1 style="position: relative; margin: 0; font: 700 28px/36px var(--font-sans); letter-spacing: -0.02em; color: #ffffff; text-align: center">Your Lisbon trip is planned.</h1>
+    <p style="position: relative; margin: 0; font: 400 15px/22px var(--font-sans); color: #e7eaf5; text-align: center">12–16 May · 2 adults · 16 stops. Book each part below, on the site where we found the best price.</p>
+  </section>
+
+  <main style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 20px 16px 16px; overflow: hidden">
+    <div style="display: flex; justify-content: space-between; align-items: baseline">
+      <h2 style="margin: 0; font: 600 17px/24px var(--font-sans); color: var(--ink)">Book your trip</h2>
+      <span style="font: 600 12px/16px var(--font-sans); color: {{countColor}}">{{countLabel}}</span>
+    </div>
+
+    <ul class="bk-list" style="list-style: none; margin: 0; padding: 0; border-radius: 20px; background: var(--surface-card); border: 1px solid var(--border); box-shadow: var(--shadow-card); overflow: hidden">
+      <sc-for list="{{items}}" as="it" hint-placeholder-count="5">
+        <li style="display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 8px; border-top: 1px solid var(--border); margin-top: -1px">
+          <button class="bk-tick" role="checkbox" aria-checked="{{it.done}}" aria-label="Mark {{it.name}} as booked" onClick="{{it.toggle}}" style="width: 36px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; padding: 0">
+            <span style="{{it.box}}"><sc-if value="{{it.done}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg></sc-if></span>
+          </button>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+            <span style="font: 700 11px/16px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted)">{{it.kind}}</span>
+            <span style="{{it.nameStyle}}">{{it.name}}</span>
+            <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">{{it.meta}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none">
+            <span style="font: 700 15px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink)">{{it.price}}</span>
+            <a class="bk-go" href="{{it.url}}" target="_blank" rel="noopener" aria-label="Book {{it.name}} on {{it.site}}, opens in a new tab" style="{{it.btn}}">{{it.site}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"></path></svg></a>
+          </div>
+        </li>
+      </sc-for>
+    </ul>
+
+    <p style="margin: 0; font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">Prices checked today at 10:40. The final price is confirmed on each site. Your plan stays in My waypoints, and we'll keep it updated as you book.</p>
+  </main>
+
+  <footer style="display: flex; gap: 8px; padding: 12px 16px 24px; background: var(--surface-card); border-top: 1px solid var(--border)">
+    <button class="wp-btn wp-btn--secondary" style="flex: 1; padding: 0 12px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"></path></svg>Share plan</button>
+    <a class="wp-btn wp-btn--primary" href="Home.dc.html" style="flex: 1; text-decoration: none; padding: 0 12px">Back to my waypoints</a>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { done: {} }; }
+  renderVals() {
+    var self = this;
+    var list = [
+      { id: 'flight', kind: 'Flight', name: 'TAP Air Portugal, direct', meta: 'TLV ⇄ LIS · 12–16 May · 2 adults', price: '€ 378', site: 'Skyscanner', url: 'https://www.skyscanner.net', primary: true },
+      { id: 'stay', kind: 'Stay', name: 'Casa do Miradouro', meta: 'Alfama · 4 nights · Double room', price: '€ 384', site: 'Booking.com', url: 'https://www.booking.com', primary: true },
+      { id: 'castle', kind: 'Ticket · Day 2', name: 'Castelo de São Jorge', meta: 'Thu 13 May · 2 tickets · est.', price: '€ 30', site: 'Official site', url: 'https://castelodesaojorge.pt', primary: false },
+      { id: 'jeronimos', kind: 'Ticket · Day 3', name: 'Jerónimos Monastery', meta: 'Fri 14 May · 2 tickets · est.', price: '€ 36', site: 'Official site', url: 'https://www.museusemonumentos.pt', primary: false },
+      { id: 'pena', kind: 'Ticket · Day 4', name: 'Pena Palace', meta: 'Sat 15 May · 2 tickets · est.', price: '€ 52', site: 'Official site', url: 'https://www.parquesdesintra.pt', primary: false }
+    ];
+    var count = 0;
+    var items = list.map(function (it) {
+      var done = !!self.state.done[it.id];
+      if (done) count++;
+      return Object.assign({}, it, {
+        done: done,
+        toggle: function () { var n = Object.assign({}, self.state.done); n[it.id] = !n[it.id]; self.setState({ done: n }); },
+        box: 'width:22px;height:22px;border-radius:7px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;' + (done ? 'background:#1d7a50;' : 'border:1.5px solid #8c857a;background:#ffffff;'),
+        nameStyle: 'font:600 15px/22px var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' + (done ? 'color:#5e5a55;text-decoration:line-through;' : 'color:#121726;'),
+        btn: 'display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0 12px;border-radius:999px;text-decoration:none;font:600 13px/18px var(--font-sans);' + (done ? 'background:transparent;color:#5e5a55;border:1px solid #e6e1d8;' : (it.primary ? 'background:#1e2a5a;color:#ffffff;' : 'background:#e7eaf5;color:#1e2a5a;'))
+      });
+    });
+    var all = count === list.length;
+    return { items: items,
+      countLabel: all ? 'All booked — enjoy Lisbon' : count + ' of ' + list.length + ' booked',
+      countColor: all || count > 0 ? '#1d7a50' : '#5e5a55' };
+  }
+}
+</script>
+</body>
+</html>

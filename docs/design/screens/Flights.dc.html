@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waypoint — Step 5, flights</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/waypoint/tokens.css">
+<link rel="stylesheet" href="ds/waypoint/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>body{margin:0}a{color:var(--midnight-900)}a:hover{color:var(--midnight-700)}
+.wp-route-trail{stroke-dasharray:100 100;stroke-dashoffset:33.333;animation:wp-trail .9s cubic-bezier(.5,0,.2,1) .25s both}
+@keyframes wp-trail{from{stroke-dashoffset:50}to{stroke-dashoffset:33.333}}
+.wp-route-marker{position:absolute;left:0;top:0;width:16px;height:16px;box-sizing:border-box;border-radius:999px;background:#ffc83d;border:2.5px solid #1e2a5a;offset-path:path("M12 28 C39.5 28 39.5 42 67 42 C94.5 42 94.5 28 122 28 C149.5 28 149.5 42 177 42 C204.5 42 204.5 28 232 28 C259.5 28 259.5 42 287 42 C314.5 42 314.5 28 342 28");offset-rotate:0deg;offset-anchor:center;offset-distance:66.667%;animation:wp-glide .9s cubic-bezier(.5,0,.2,1) .25s both,wp-pulse 2s ease-out 1.4s infinite}
+@keyframes wp-glide{from{offset-distance:50%}to{offset-distance:66.667%}}
+@keyframes wp-pulse{0%{box-shadow:0 0 0 0 rgba(255,200,61,.7)}100%{box-shadow:0 0 0 10px rgba(255,200,61,0)}}
+.wp-route-now{animation:wp-fade .4s ease-out 1s both}
+@keyframes wp-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.wp-route-trail,.wp-route-now{animation:none}
+.wp-route-marker{animation:wp-pulse 2s ease-out .6s infinite}
+main>*{animation:wp-in .5s cubic-bezier(.2,.8,.2,1) both}
+main>*:nth-child(1){animation-delay:.08s}main>*:nth-child(2){animation-delay:.16s}main>*:nth-child(3){animation-delay:.24s}main>*:nth-child(4){animation-delay:.32s}main>*:nth-child(5){animation-delay:.4s}main>*:nth-child(6){animation-delay:.48s}
+@keyframes wp-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wp-info{position:absolute;top:6px;right:6px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;border-radius:12px;background:transparent;color:#1e2a5a;cursor:pointer}
+.wp-info:hover{background:#e7eaf5}
+.wp-info:focus-visible,.wp-sheet button:focus-visible,.wp-sheet a:focus-visible{outline:2px solid #33437f;outline-offset:2px}
+.wp-sheet-bg{position:absolute;inset:0;z-index:20;border:none;padding:0;margin:0;background:rgba(18,23,38,.5);cursor:pointer;animation:wp-bg .25s ease-out both}
+.wp-sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;max-height:790px;display:flex;flex-direction:column;background:#ffffff;border-radius:20px 20px 0 0;box-shadow:0 -4px 20px rgba(18,23,38,.08);animation:wp-up .35s cubic-bezier(.2,.8,.2,1) both}
+.wp-sheet__body{overflow-y:auto;padding:0 16px 16px;display:flex;flex-direction:column;gap:20px}
+.wp-sheet__foot{display:flex;gap:8px;padding:12px 16px 24px;border-top:1px solid #e6e1d8}
+.wp-dl{margin:0;display:flex;flex-direction:column;gap:10px}
+.wp-row{display:flex;justify-content:space-between;gap:12px;font:400 14px/20px var(--font-sans)}
+.wp-row dt{color:#5e5a55}.wp-row dd{margin:0;text-align:right;color:#121726;font-weight:600}
+.wp-h3{margin:0;font:600 15px/22px var(--font-sans);color:#121726}
+@keyframes wp-bg{from{opacity:0}to{opacity:1}}
+@keyframes wp-up{from{transform:translateY(100%)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.wp-route-trail,.wp-route-marker,.wp-route-now,main>*,.wp-sheet,.wp-sheet-bg{animation:none}}
+</style>
+</helmet>
+<div class="wp" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; flex-direction: column; gap: 8px; padding: 8px 16px 0">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <a href="Plan.dc.html" aria-label="Back" style="width: 44px; height: 44px; margin-left: -10px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--ink)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></a>
+      <span style="font: 600 14px/20px var(--font-sans); color: var(--ink)">Lisbon · 12–16 May</span>
+      <a href="Home.dc.html" aria-label="Close" style="width: 44px; height: 44px; margin-right: -10px; display: flex; align-items: center; justify-content: center; border-radius: 12px; color: var(--ink)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+    </div>
+    <div role="progressbar" aria-valuemin="1" aria-valuemax="6" aria-valuenow="5" aria-label="Step 5 of 6, Flights" style="position: relative; height: 68px">
+      <svg width="358" height="68" viewBox="0 0 358 68" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible">
+        <path d="M12 28 C39.5 28 39.5 42 67 42 C94.5 42 94.5 28 122 28 C149.5 28 149.5 42 177 42 C204.5 42 204.5 28 232 28 C259.5 28 259.5 42 287 42 C314.5 42 314.5 28 342 28" fill="none" stroke="#8c857a" stroke-width="2" stroke-linecap="round" stroke-dasharray="0 7"></path>
+        <path class="wp-route-trail" d="M12 28 C39.5 28 39.5 42 67 42 C94.5 42 94.5 28 122 28 C149.5 28 149.5 42 177 42 C204.5 42 204.5 28 232 28 C259.5 28 259.5 42 287 42 C314.5 42 314.5 28 342 28" pathLength="100" fill="none" stroke="#1e2a5a" stroke-width="3" stroke-linecap="round"></path>
+        <circle cx="12" cy="28" r="5" fill="#1e2a5a"></circle>
+        <circle cx="67" cy="42" r="5" fill="#1e2a5a"></circle>
+        <circle cx="122" cy="28" r="5" fill="#1e2a5a"></circle>
+        <circle cx="177" cy="42" r="5" fill="#1e2a5a"></circle>
+        <circle cx="232" cy="28" r="6" fill="#ffffff" stroke="#1e2a5a" stroke-width="2"></circle>
+        <circle cx="287" cy="42" r="5" fill="#faf8f4" stroke="#8c857a" stroke-width="2"></circle>
+        <circle cx="342" cy="28" r="7" fill="#faf8f4" stroke="#8c857a" stroke-width="2"></circle><circle cx="342" cy="28" r="2.5" fill="#8c857a"></circle>
+      </svg>
+      <span class="wp-route-marker"></span>
+      <span style="position: absolute; top: 52px; left: -4px; font: 500 11px/14px var(--font-sans); color: var(--ink-muted); white-space: nowrap">Views +2</span>
+      <span style="position: absolute; top: 52px; left: 37px; width: 60px; text-align: center; font: 500 11px/14px var(--font-sans); color: var(--ink-muted); white-space: nowrap">Lisbon</span>
+      <span style="position: absolute; top: 52px; left: 92px; width: 60px; text-align: center; font: 500 11px/14px var(--font-sans); color: var(--ink-muted); white-space: nowrap">5 days</span>
+      <span style="position: absolute; top: 52px; left: 147px; width: 60px; text-align: center; font: 500 11px/14px var(--font-sans); color: var(--ink-muted); white-space: nowrap">16 stops</span>
+      <span class="wp-route-now" style="position: absolute; top: 2px; left: 182px; width: 100px; text-align: center; font: 700 12px/14px var(--font-sans); color: var(--ink); white-space: nowrap">Flights</span>
+    </div>
+  </header>
+
+  <main style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 20px 16px 16px; overflow: hidden">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font: 700 24px/32px var(--font-sans); letter-spacing: -0.01em; color: var(--ink)">Choose your flight</h1>
+      <p style="margin: 0; font: 400 15px/22px var(--font-sans); color: var(--ink-muted)">Round trip TLV ⇄ LIS · 2 adults. Times fit your day plan.</p>
+    </div>
+
+    <div style="display: flex; gap: 8px; overflow: hidden">
+      <button class="wp-chip" aria-pressed="true" style="flex: none">Direct only</button>
+      <button class="wp-chip" aria-pressed="true" style="flex: none">Checked bag</button>
+      <button class="wp-chip" aria-pressed="false" style="flex: none">Morning out</button>
+      <button class="wp-chip" aria-pressed="false" style="flex: none">Flexible</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <sc-for list="{{flights}}" as="f" hint-placeholder-count="3">
+        <div style="position: relative">
+          <button aria-pressed="{{f.on}}" onClick="{{f.pick}}" class="{{f.cls}}">
+            <div class="wp-offer__head" style="padding-right: 36px">
+              <span style="display: flex; gap: 6px; flex-wrap: wrap">
+                <sc-if value="{{f.best}}" hint-placeholder-val="{{false}}"><span class="wp-badge wp-badge--value">★ Best value</span></sc-if>
+                <span class="wp-badge wp-badge--neutral">{{f.stops}}</span>
+                <sc-if value="{{f.warn}}" hint-placeholder-val="{{false}}"><span class="wp-badge wp-badge--warning">{{f.warn}}</span></sc-if>
+              </span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <p class="wp-offer__title">{{f.airline}}</p>
+              <div style="display: grid; grid-template-columns: 40px 1fr; row-gap: 2px; font: 400 14px/20px var(--font-sans); color: var(--ink)">
+                <span style="font: 600 12px/20px var(--font-sans); color: var(--ink-muted)">Out</span><span style="font-variant-numeric: tabular-nums">{{f.out}}</span>
+                <span style="font: 600 12px/20px var(--font-sans); color: var(--ink-muted)">Back</span><span style="font-variant-numeric: tabular-nums">{{f.back}}</span>
+              </div>
+            </div>
+            <div class="wp-offer__foot">
+              <div><div class="wp-offer__price">{{f.price}}</div><div class="wp-offer__unit">Lowest on {{f.site}} · per person</div></div>
+              <span class="{{f.deltaCls}}">{{f.delta}}</span>
+            </div>
+          </button>
+          <button class="wp-info" aria-label="Details for {{f.airline}}" onClick="{{f.info}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5.5M12 7.6v.1"></path></svg></button>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+
+  <div class="wp-summary">
+    <div class="wp-summary__info">
+      <div class="wp-summary__trip">Lisbon · 12–16 May · 2 travelers</div>
+      <div class="wp-summary__total">{{total}}</div>
+      <div class="wp-summary__steps" aria-label="4 of 6 steps done"><span class="wp-summary__dot wp-summary__dot--done"></span><span class="wp-summary__dot wp-summary__dot--done"></span><span class="wp-summary__dot wp-summary__dot--done"></span><span class="wp-summary__dot wp-summary__dot--done"></span><span class="wp-summary__dot"></span><span class="wp-summary__dot"></span></div>
+    </div>
+    <a class="wp-btn wp-btn--primary" href="Go5.dc.html" style="text-decoration: none">Continue to stay</a>
+  </div>
+
+  <sc-if value="{{open}}" hint-placeholder-val="{{false}}">
+    <button class="wp-sheet-bg" aria-label="Close details" onClick="{{close}}"></button>
+    <section class="wp-sheet" role="dialog" aria-modal="true" aria-labelledby="flight-sheet-title">
+      <div style="display: flex; justify-content: center; padding: 8px 0 0"><span style="width: 36px; height: 4px; border-radius: 999px; background: #e6e1d8"></span></div>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding: 8px 8px 12px 16px">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <h2 id="flight-sheet-title" style="margin: 0; font: 700 20px/28px var(--font-sans); color: var(--ink)">{{d.airline}}</h2>
+          <span style="display: flex; gap: 6px; flex-wrap: wrap">
+            <sc-if value="{{d.best}}" hint-placeholder-val="{{false}}"><span class="wp-badge wp-badge--value">★ Best value</span></sc-if>
+            <span class="wp-badge wp-badge--neutral">{{d.stops}}</span>
+          </span>
+        </div>
+        <button aria-label="Close" onClick="{{close}}" style="width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; border: none; border-radius: 12px; background: var(--midnight-100); color: var(--midnight-900); cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+
+      <div class="wp-sheet__body">
+        <div style="display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px; overflow: hidden">
+          <sc-for list="{{d.legs}}" as="leg" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-top: 1px solid var(--border); margin-top: -1px">
+              <span style="font: 600 12px/16px var(--font-sans); color: var(--ink-muted)">{{leg.label}}</span>
+              <span style="font: 700 18px/24px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink)">{{leg.times}}</span>
+              <span style="font: 400 13px/18px var(--font-sans); color: var(--ink-muted)">{{leg.meta}}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <dl class="wp-dl">
+          <div class="wp-row"><dt>Fare</dt><dd>{{d.fare}}</dd></div>
+          <div class="wp-row"><dt>Bags</dt><dd>{{d.bags}}</dd></div>
+          <div class="wp-row"><dt>Changes</dt><dd>{{d.changes}}</dd></div>
+          <div class="wp-row"><dt>Seats</dt><dd>{{d.seats}}</dd></div>
+        </dl>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline">
+            <h3 class="wp-h3">Where we found it</h3>
+            <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">Per person · checked just now</span>
+          </div>
+          <ul style="list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 12px; overflow: hidden">
+            <sc-for list="{{d.sources}}" as="s" hint-placeholder-count="3">
+              <li style="{{s.style}}">
+                <span style="flex: 1; font: 600 14px/20px var(--font-sans); color: var(--ink)">{{s.site}}</span>
+                <sc-if value="{{s.best}}" hint-placeholder-val="{{false}}"><span class="wp-badge wp-badge--savings">Lowest</span></sc-if>
+                <span style="font: 700 15px/20px var(--font-sans); font-variant-numeric: tabular-nums; color: var(--ink); min-width: 56px; text-align: right">{{s.price}}</span>
+              </li>
+            </sc-for>
+          </ul>
+          <p style="margin: 0; font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">Waypoint compares airline and travel sites and shows you the lowest full price, bags included.</p>
+        </div>
+      </div>
+
+      <div class="wp-sheet__foot">
+        <a class="wp-btn wp-btn--secondary" href="{{d.url}}" target="_blank" rel="noopener" style="flex: 1; text-decoration: none; padding: 0 12px">View on {{d.site}}<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"></path></svg></a>
+        <button class="wp-btn wp-btn--primary" onClick="{{d.select}}" style="flex: 1; padding: 0 12px">{{d.selectLabel}}</button>
+      </div>
+    </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { sel: 'tap', info: null }; }
+  renderVals() {
+    var self = this;
+    var list = [
+      { id: 'tap', airline: 'TAP Air Portugal', stops: 'Direct', out: 'Wed 12 · 08:10 → 11:25 · 5h 15m', back: 'Sun 16 · 17:30 → 00:35 · 5h 05m', pp: 189, delta: '−€84 vs avg', deltaCls: 'wp-delta', best: true, warn: '',
+        site: 'Skyscanner', url: 'https://www.skyscanner.net',
+        legs: [{ label: 'Out · Wed 12 May', times: '08:10 → 11:25', meta: 'Tel Aviv (TLV) → Lisbon (LIS) · 5h 15m · Direct' }, { label: 'Back · Sun 16 May', times: '17:30 → 00:35 +1', meta: 'Lisbon (LIS) → Tel Aviv (TLV) · 5h 05m · Direct' }],
+        fare: 'Economy Classic', bags: '23 kg checked + cabin bag', changes: 'Changes for a fee', seats: 'Seat choice from € 12',
+        sources: [{ site: 'Skyscanner', pp: 189 }, { site: 'Kayak', pp: 194 }, { site: 'flytap.com', pp: 199 }] },
+      { id: 'elal', airline: 'El Al', stops: 'Direct', out: 'Wed 12 · 09:40 → 12:50 · 5h 10m', back: 'Sun 16 · 15:55 → 23:05 · 5h 10m', pp: 246, delta: '+€57 vs best', deltaCls: 'wp-delta wp-delta--up', best: false, warn: '',
+        site: 'elal.com', url: 'https://www.elal.com',
+        legs: [{ label: 'Out · Wed 12 May', times: '09:40 → 12:50', meta: 'Tel Aviv (TLV) → Lisbon (LIS) · 5h 10m · Direct' }, { label: 'Back · Sun 16 May', times: '15:55 → 23:05', meta: 'Lisbon (LIS) → Tel Aviv (TLV) · 5h 10m · Direct' }],
+        fare: 'Economy Classic', bags: '23 kg checked + cabin bag', changes: 'Free changes', seats: 'Seat choice included',
+        sources: [{ site: 'elal.com', pp: 246 }, { site: 'Google Flights', pp: 246 }, { site: 'Kayak', pp: 251 }] },
+      { id: 'lh', airline: 'Lufthansa', stops: '1 stop · MUC', out: 'Wed 12 · 05:00 → 12:40 · 8h 40m', back: 'Sun 16 · 13:15 → 23:50 · 9h 35m', pp: 214, delta: '+€25 vs best', deltaCls: 'wp-delta wp-delta--up', best: false, warn: '3 seats left',
+        site: 'Kayak', url: 'https://www.kayak.com',
+        legs: [{ label: 'Out · Wed 12 May', times: '05:00 → 12:40', meta: 'TLV → LIS · 8h 40m · Change in Munich (1h 10m)' }, { label: 'Back · Sun 16 May', times: '13:15 → 23:50', meta: 'LIS → TLV · 9h 35m · Change in Munich (1h 55m)' }],
+        fare: 'Economy Light + bag', bags: '23 kg checked + cabin bag', changes: 'Changes for a fee', seats: 'Seat choice from € 15',
+        sources: [{ site: 'Kayak', pp: 214 }, { site: 'Expedia', pp: 219 }, { site: 'lufthansa.com', pp: 228 }] }
+    ];
+    var total = 118;
+    var flights = list.map(function (f) {
+      var on = self.state.sel === f.id;
+      if (on) total += f.pp * 2;
+      return Object.assign({}, f, { on: on, price: '€ ' + f.pp,
+        cls: 'wp-offer' + (f.best ? ' wp-offer--best' : ''),
+        pick: function () { self.setState({ sel: f.id }); },
+        info: function () { self.setState({ info: f.id }); } });
+    });
+    var d = null;
+    flights.forEach(function (f) { if (f.id === self.state.info) d = f; });
+    var detail = d ? Object.assign({}, d, {
+      sources: d.sources.map(function (s, i) {
+        return { site: s.site, price: '€ ' + s.pp, best: i === 0,
+          style: 'display:flex;align-items:center;gap:8px;min-height:48px;padding:0 14px;border-top:1px solid #e6e1d8;margin-top:-1px;' + (i === 0 ? 'background:#e3f2ea;' : '') };
+      }),
+      selectLabel: d.on ? 'Selected' : 'Select flight',
+      select: function () { self.setState({ sel: d.id, info: null }); }
+    }) : { legs: [], sources: [] };
+    return { flights: flights, total: '€ ' + total.toLocaleString('en-US'), open: !!d, d: detail,
+      close: function () { self.setState({ info: null }); } };
+  }
+}
+</script>
+</body>
+</html>

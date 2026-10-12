@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Waypoint — My waypoints</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/waypoint/tokens.css">
+<link rel="stylesheet" href="ds/waypoint/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>body{margin:0}a{color:var(--midnight-900)}a:hover{color:var(--midnight-700)}</style>
+</helmet>
+<div class="wp" style="width: 390px; height: 844px; box-sizing: border-box; background: var(--surface); display: flex; flex-direction: column; overflow: hidden">
+  <header style="display: flex; align-items: center; justify-content: space-between; padding: 24px 16px 8px">
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">Good morning</span>
+      <span style="font: 700 24px/32px var(--font-sans); letter-spacing: -0.01em; color: var(--ink)">Hi, Ray</span>
+    </div>
+    <button aria-label="Profile" style="width: 44px; height: 44px; border-radius: 999px; border: none; background: var(--midnight-100); color: var(--midnight-900); font: 700 15px/1 var(--font-sans); cursor: pointer">R</button>
+  </header>
+
+  <main style="flex: 1; display: flex; flex-direction: column; gap: 32px; padding: 16px; overflow: hidden">
+    <a href="Style.dc.html" style="text-decoration: none; display: flex; flex-direction: column; gap: 16px; padding: 24px; border-radius: 20px; background: var(--midnight-900); color: var(--on-midnight); position: relative; overflow: hidden">
+      <svg width="140" height="120" viewBox="0 0 140 120" aria-hidden="true" style="position: absolute; right: -8px; top: -8px"><circle cx="30" cy="96" r="8" fill="#ffc83d"></circle><circle cx="66" cy="66" r="8" fill="#ffc83d"></circle><circle cx="102" cy="40" r="8" fill="none" stroke="#ffc83d" stroke-width="2"></circle><circle cx="128" cy="14" r="8" fill="none" stroke="#e7eaf5" stroke-width="2" opacity="0.6"></circle></svg>
+      <span style="font: 700 11px/16px var(--font-sans); letter-spacing: 0.06em; text-transform: uppercase; color: var(--sunshine-400)">New trip</span>
+      <span style="font: 700 24px/32px var(--font-sans); letter-spacing: -0.01em; max-width: 230px">Create a waypoint</span>
+      <span style="font: 400 15px/22px var(--font-sans); color: #e7eaf5; max-width: 260px">Pick a style, we'll plan the days and find the best-value flight and stay. About five minutes.</span>
+      <span style="display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; min-height: 44px; padding: 0 20px; border-radius: 12px; background: var(--sunshine-400); color: var(--ink); font: 600 14px/20px var(--font-sans)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Start planning
+      </span>
+    </a>
+
+    <section style="display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <h2 style="margin: 0; font: 600 20px/28px var(--font-sans); color: var(--ink)">My waypoints</h2>
+        <a href="#" style="font: 600 14px/20px var(--font-sans); text-decoration: none">See all</a>
+      </div>
+
+      <a href="Plan.dc.html" style="text-decoration: none; color: inherit; display: flex; gap: 12px; padding: 12px; border-radius: 20px; background: var(--surface-card); border: 1px solid var(--border); box-shadow: var(--shadow-card)">
+        <div style="width: 72px; height: 72px; flex: none; border-radius: 12px; background: var(--sunshine-100); display: flex; align-items: center; justify-content: center; font: 800 20px/1 var(--font-sans); color: var(--midnight-900)">LIS</div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="font: 600 17px/24px var(--font-sans); color: var(--ink)">Lisbon</span>
+            <span class="wp-badge wp-badge--neutral">Draft</span>
+          </div>
+          <span style="font: 400 14px/20px var(--font-sans); color: var(--ink-muted)">12–16 May · 2 travelers</span>
+          <div class="wp-progress__track" style="max-width: 180px"><span class="wp-progress__seg wp-progress__seg--done"></span><span class="wp-progress__seg wp-progress__seg--done"></span><span class="wp-progress__seg wp-progress__seg--done"></span><span class="wp-progress__seg wp-progress__seg--current"></span><span class="wp-progress__seg"></span><span class="wp-progress__seg"></span></div>
+          <span style="font: 600 12px/16px var(--font-sans); color: var(--midnight-900)">Continue · Day plan</span>
+        </div>
+      </a>
+
+      <a href="Summary.dc.html" style="text-decoration: none; color: inherit; display: flex; gap: 12px; padding: 12px; border-radius: 20px; background: var(--surface-card); border: 1px solid var(--border); box-shadow: var(--shadow-card)">
+        <div style="width: 72px; height: 72px; flex: none; border-radius: 12px; background: var(--midnight-100); display: flex; align-items: center; justify-content: center; font: 800 20px/1 var(--font-sans); color: var(--midnight-900)">FCO</div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="font: 600 17px/24px var(--font-sans); color: var(--ink)">Rome</span>
+            <span class="wp-badge wp-badge--savings">Booked</span>
+          </div>
+          <span style="font: 400 14px/20px var(--font-sans); color: var(--ink-muted)">20–24 Dec · 4 travelers</span>
+          <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">Flight, stay and 4-day plan ready</span>
+        </div>
+      </a>
+
+      <a href="#" style="text-decoration: none; color: inherit; display: flex; gap: 12px; padding: 12px; border-radius: 20px; background: var(--surface-card); border: 1px solid var(--border)">
+        <div style="width: 72px; height: 72px; flex: none; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font: 800 20px/1 var(--font-sans); color: var(--ink-muted)">HER</div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="font: 600 17px/24px var(--font-sans); color: var(--ink)">Crete</span>
+            <span style="font: 500 12px/16px var(--font-sans); color: var(--ink-muted)">Past</span>
+          </div>
+          <span style="font: 400 14px/20px var(--font-sans); color: var(--ink-muted)">3–10 Aug · 2 travelers</span>
+          <span style="font: 600 12px/16px var(--font-sans); color: var(--midnight-900)">Plan it again</span>
+        </div>
+      </a>
+    </section>
+  </main>
+
+  <nav aria-label="Main" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 8px 16px 24px; background: var(--surface-card); border-top: 1px solid var(--border)">
+    <a href="Home.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 44px; justify-content: center; text-decoration: none; color: var(--midnight-900); font: 600 12px/16px var(--font-sans)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="18" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="18" cy="6" r="2"></circle><path d="M7.5 16.5l3-3M13.5 10.5l3-3"></path></svg>Waypoints</a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 44px; justify-content: center; text-decoration: none; color: var(--ink-muted); font: 500 12px/16px var(--font-sans)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15.5 8.5l-2 5-5 2 2-5z"></path></svg>Explore</a>
+    <a href="#" style="display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 44px; justify-content: center; text-decoration: none; color: var(--ink-muted); font: 500 12px/16px var(--font-sans)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>Profile</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
