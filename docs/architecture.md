@@ -408,6 +408,51 @@ Expected failures are typed results, not thrown exceptions. Service-to-service c
 - Every provider adapter passes one shared contract test.
 - A **fake provider** returns the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults), so the app and services run with no API keys.
 
+### Local development
+
+Development runs fully offline by default: a local Supabase stack plus fake providers. Cloud services are opt-in per service through env vars.
+
+```mermaid
+flowchart LR
+  subgraph Laptop["Developer machine"]
+    APPL["App<br/>simulator or phone on LAN"]
+    subgraph Svc["Services (npm workspaces)"]
+      TL["trips :4001"]
+      SL["search :4002"]
+      PL["planner :4003"]
+      JL["jobs :4004"]
+    end
+    subgraph Docker["Supabase CLI (Docker)"]
+      AUL["Auth :54321"]
+      DBL[("Postgres :54322")]
+      MAIL["Email inbox :54324"]
+    end
+    FAKE["Fake providers<br/>sample Lisbon trip"]
+  end
+
+  APPL -- "sign in (email code)" --> AUL
+  AUL -- "login codes" --> MAIL
+  APPL --> TL
+  APPL --> SL
+  APPL --> PL
+  TL --> DBL
+  SL --> DBL
+  PL --> DBL
+  JL --> DBL
+  SL --> FAKE
+  PL --> FAKE
+```
+
+| Piece | Offline | Online (opt-in) |
+|---|---|---|
+| Database | local Postgres, one schema per service | Supabase cloud |
+| Auth | local Auth, email codes in the local inbox | Supabase cloud, plus Google and Apple sign-in |
+| Hotels | `HOTEL_PROVIDERS=fake` | `liteapi` (sandbox key) |
+| Flights | `FLIGHT_PROVIDERS=fake` | `aviasales` |
+| Day-plan text | `LLM_PROVIDER=fake` | the real LLM API |
+
+Commands: `npx supabase start` / `stop`, then each service with its own dev script. Prisma owns migrations (`prisma migrate dev` per service); the Supabase CLI only runs the database. A real phone reaches the services through the computer's local network IP, not `127.0.0.1`. Full rules: root `CLAUDE.md`, "Local development".
+
 ## 7. Phased roadmap
 
 ```mermaid

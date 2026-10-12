@@ -174,3 +174,17 @@ waypoint/
 - **npm workspaces** only. No Turborepo/Nx until build times prove a need.
 - Each service builds and deploys on its own (one service per host on Railway/Render), with its own env vars. Every running service costs money on most hosts — keep the service count at these four until a split is clearly justified.
 - Paths in other sections (e.g. `src/theme/`, `hotels/`) are relative to the app or service they belong to.
+
+## Local development (default: fully offline)
+
+Development runs against a **local Supabase stack and fake providers** by default. Cloud Supabase, liteAPI, Aviasales and the LLM are opt-in per service via env vars.
+
+- **Supabase CLI** is a root dev dependency (`npx supabase …`); config lives in `supabase/config.toml`. Docker must be running.
+  - `npx supabase start` starts Postgres, Auth, Studio and a local email inbox. `npx supabase stop` stops it and keeps the data.
+  - Default local addresses: API + Auth `http://127.0.0.1:54321` · Postgres `postgresql://postgres:postgres@127.0.0.1:54322/postgres` · Studio `http://127.0.0.1:54323` · email inbox `http://127.0.0.1:54324`. Take keys from `npx supabase status`, never hard-code them.
+- **Database:** each service's `DATABASE_URL` points at local Postgres with its own `?schema=<service>`. Migrations are Prisma's (`prisma migrate dev` per service); the Supabase CLI runs the database but does not own Waypoint's migrations.
+- **Auth:** email login codes land in the local inbox, not real email. `requireUser` works unchanged — only `SUPABASE_URL` differs (local Auth serves its own JWKS). Google and Apple sign-in need the internet; use email login offline.
+- **Providers:** the composition root picks providers from env, e.g. `HOTEL_PROVIDERS=fake` (default in development) or `HOTEL_PROVIDERS=liteapi`; same for `FLIGHT_PROVIDERS`. The fake providers return the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults). The planner's LLM step has a fake too (fixed descriptions), selected with `LLM_PROVIDER=fake`. Unknown provider names fail at startup, not at request time.
+- **Env:** each service and the app has a committed `.env.example` with the local defaults; real `.env` / `.env.local` files are git-ignored. Env vars are parsed with Zod at startup (`@waypoint/server-kit`), and a service refuses to start with a missing or invalid value.
+- **Phone vs simulator:** the iOS simulator can use `127.0.0.1`. A real phone can't — point `EXPO_PUBLIC_SUPABASE_URL` and the `EXPO_PUBLIC_*_URL` service URLs at the computer's local network IP.
+- **Ports:** each service has a fixed local port, set in its `.env.example` (proposed: trips 4001, search 4002, planner 4003, jobs 4004).
