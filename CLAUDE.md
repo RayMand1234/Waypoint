@@ -27,8 +27,8 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 
 ## Architecture
 
-- **Three layers:** mobile app → Waypoint backend → external services. **The app never calls outside sources directly** (sole exception: Supabase Auth sign-in, see Stack). Its only data server is the Waypoint backend, through `apiRequest()` and React Query (SAPI `react-query-server-interaction`).
-- **Backend domains:** accounts & trips, trip planner, search aggregator, value scoring, cache & background jobs. One folder per domain.
+- **Three layers:** mobile app → Waypoint backend services → external services. **The app never calls outside sources directly** (sole exception: Supabase Auth sign-in, see Stack). Its only data servers are the Waypoint services, through `apiRequest()` and React Query (SAPI `react-query-server-interaction`).
+- **Backend services:** `trips`, `search`, `planner`, `jobs` — each deployed separately, talking only through APIs. See "Repo shape".
 - **Provider adapters:** see the contract below. Swapping or adding a source never touches anything outside that source's adapter folder and the provider list.
 - **Day planning is hybrid:** a deterministic algorithm handles area grouping, opening hours and travel times; an LLM only picks spots for the traveler's styles and writes descriptions. Keep the two separate so the algorithm stays testable without the LLM.
 - **Destinations at launch:** a curated list of 50–100 cities tagged by style.
@@ -45,7 +45,7 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 
 **Server side**
 
-- `requireUser` Express middleware verifies the token **locally** with `jose`: `createRemoteJWKSet(<SUPABASE_URL>/auth/v1/.well-known/jwks.json)` + `jwtVerify` checking issuer `<SUPABASE_URL>/auth/v1` and audience `authenticated`. Missing/invalid → 401. On success `res.locals.userId = payload.sub`.
+- `requireUser` (in `@waypoint/server-kit`, used by every service) verifies the token **locally** with `jose`: `createRemoteJWKSet(<SUPABASE_URL>/auth/v1/.well-known/jwks.json)` + `jwtVerify` checking issuer `<SUPABASE_URL>/auth/v1` and audience `authenticated`. Missing/invalid → 401. On success `res.locals.userId = payload.sub`.
 - Handlers trust only `res.locals.userId`, never a user id from the body or query.
 - The project must use **asymmetric JWT signing keys** (ES256), not the legacy shared secret.
 - Supabase owns the `auth` schema; Prisma never migrates it. Waypoint's `Profile` is keyed by the Supabase user id (`userId` = `auth.users.id` = JWT `sub`) and is created with an `upsert` on the user's first authenticated request.
@@ -120,6 +120,55 @@ Rules:
 - **Accessibility:** touch targets ≥ 44 (`minHeight: 44`); font sizes respect `rt.fontScale` (cap where layout would break); prices use `theme.font.tabular`.
 - **Shared design-system components** (Button, Chip, Badge, Input, Route, OfferCard, TripSummaryBar) live in `shared/components/`, each matching the design system artifact.
 
-## Repo shape
 
-Not created yet. Decide and record here (monorepo with `app/` and `server/`, or separate repos) before the first code lands.
+## Repo shape (decided: monorepo of independently deployable services)
+
+```
+waypoint/
+  .claude/                SAPI submodule (shared Claude Code config)
+  CLAUDE.md               this file
+  package.json            npm workspaces: apps/*, services/*, packages/*
+  apps/
+    mobile/               Expo app (React Native, Unistyles, React Query)
+      src/features/<name>/{components,hooks,utils}
+      src/shared/         cross-feature components/hooks/utils, apiClient, auth
+      src/theme/          tokens.ts + unistyles.ts
+  services/               each one: own package.json, own Express 5 server, own deploy
+    trips/                profiles, trips, days, saved picks
+    search/               hotel + flight aggregation, provider adapters, value scoring, deep links
+    planner/              destinations, spots, day plans, travel times, LLM text
+    jobs/                 scheduled/background work (cache refresh, cleanup); no public routes
+  packages/
+    contracts/            @waypoint/contracts — Zod schemas + inferred types for every service's API
+    server-kit/           @waypoint/server-kit — Express helpers every service uses
+```
+
+**Services**
+
+- **Each service is deployed on its own** and owns one domain. It exposes an HTTP API and nothing else; there is no shared in-process code path between services.
+- **Services talk only through each other's APIs**, never by importing another service's code and never by reading another service's tables.
+- Service-to-service calls use the typed client from `@waypoint/server-kit` with the callee's `@waypoint/contracts` schemas: per-call timeout, response parsed with Zod, failure returned as a typed result (not thrown). A slow or down service must degrade the caller, not crash it.
+- On a user's behalf, a service **forwards the user's bearer token**; the callee verifies it with the same `requireUser`. `jobs` (no user) calls with an internal service key (`INTERNAL_API_KEY`, server-side env only), checked by a `requireService` middleware. Internal-only routes accept only the service key.
+- Every service has `GET /health`.
+
+**Data**
+
+- One Supabase Postgres, **one Postgres schema per service** (`trips`, `search`, `planner`, `jobs`). Each service has its own `prisma/schema.prisma` and migrations, pointed at its own schema via the connection URL (`?schema=<service>`), and never touches another schema. Need another service's data → call its API.
+- Supabase's `auth` schema belongs to Supabase; no service migrates it.
+
+**Packages**
+
+- `@waypoint/contracts` is the single definition of every API shape (`HotelOffer`, `FlightOffer`, `Trip`, request/response schemas), organized per service (`contracts/search`, `contracts/trips`, …). Servers validate against it; the app's `apiRequest()` parses responses with it; services parse each other's responses with it. Pure: Zod + types only, no I/O.
+- `@waypoint/server-kit` holds cross-service plumbing only: `requireUser`, `requireService`, the typed service client, error/health handlers, env parsing. **No business logic.**
+- Provider-specific types (liteAPI, Aviasales) live only inside `services/search/src/**/providers/` — never in `packages/`.
+- Code moves into a package only once two or more services/apps need it.
+
+**App ↔ services**
+
+- The app calls the public services (`trips`, `search`, `planner`) directly, each with its own base URL (`EXPO_PUBLIC_TRIPS_URL`, …). `apiRequest(service, path, schema)` picks the base URL, attaches the token and parses with the contract. A single API gateway in front is a later option, not MVP.
+
+**Tooling & deployment**
+
+- **npm workspaces** only. No Turborepo/Nx until build times prove a need.
+- Each service builds and deploys on its own (one service per host on Railway/Render), with its own env vars. Every running service costs money on most hosts — keep the service count at these four until a split is clearly justified.
+- Paths in other sections (e.g. `src/theme/`, `hotels/`) are relative to the app or service they belong to.
