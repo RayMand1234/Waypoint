@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+
+# env
+.env
+.env.*
+!.env.example
+
+# build output
+dist/
+build/
+*.tsbuildinfo
+
+# test / tooling caches
+coverage/
+.vitest/
+.eslintcache
+
+# Expo
+.expo/
+.expo-shared/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Prisma
+**/prisma/*.db
+**/prisma/*.db-journal
+**/generated/prisma/
+
+# Supabase (local stack state; config.toml IS committed)
+supabase/.branches/
+supabase/.temp/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json

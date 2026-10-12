@@ -259,3 +259,10 @@ export const err = <E>(error: E): Result<never, E> => ({ ok: false, error })
 - `throw` only for programmer errors and broken invariants; the server-kit error handler turns those into a 500 and reports them.
 - **HTTP error body**, defined in contracts and used by every service: `{ "error": { "code": "<kebab-case>", "message": "<human sentence>" } }`. Routes map each error `type` to a status explicitly.
 - **Money** is `{ amountMinor: number; currency: 'EUR' | … }` (integer minor units), never a float. **Dates** cross the wire as ISO strings, validated by Zod.
+
+## Context map
+
+One `CLAUDE.md` per module, at that module's own root, saying what it is responsible for, what it must not do, and what crosses its boundaries. Read the one for the module you're touching instead of the whole repo — and update it in the same commit when its role, boundaries or connections change.
+
+- `packages/contracts/` — every API shape, as Zod schemas plus the shared `Result` / `Money` / error-body primitives. → its own `CLAUDE.md`.
+- `packages/server-kit/` — the Express plumbing every service wires up: env parsing, auth, request ids, errors, health, the service client. → its own `CLAUDE.md`.
