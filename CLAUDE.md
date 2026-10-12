@@ -17,7 +17,8 @@ Shared engineering rules come from SAPI, mounted at `.claude/` (git submodule). 
 Items marked **decided** are settled. For anything marked **open**, ask before adding a framework, service or dependency that locks it in.
 
 - **Language — decided:** TypeScript, `strict`, end to end.
-- **App — proposed:** React Native (Expo).
+- **App — decided:** React Native (Expo), New Architecture, run as an Expo **development build** (not Expo Go — Unistyles ships native code).
+- **Styling — decided:** **Unistyles 3**. No MUI, no Tamagui, no NativeWind, no third-party pre-styled component kits — Waypoint's components are our own, built from the design system. Rules in "Styling" below.
 - **Backend — decided:** Node + **Express** (v5). Route handlers are plain functions, no classes, no DI container. Validate request input with Zod at the handler boundary.
 - **Database — decided:** **Supabase**-hosted Postgres, used as plain Postgres. **Prisma** is the data layer (schema file, generated client, plain-object results; no TypeORM, no decorator entities). Prisma uses Supabase's pooled URL at runtime and the direct URL for migrations. The free plan pauses idle projects and has no backups: fine for development, upgrade before real users.
 - **Auth — open:** Supabase Auth (app logs in, Express verifies the token) vs. auth on our own server (e.g. Better Auth). Logins needed: email link, Google, Apple.
@@ -88,6 +89,17 @@ Rules:
 - Tokens: midnight `#1E2A5A` primary; sunshine `#FFC83D` only means "best value" (fill with ink text, never text on light); surface `#FAF8F4`; ink `#121726`; ink-muted `#5E5A55`; savings `#1D7A50`; danger `#C2362C`; warning `#A15C00`. Plus Jakarta Sans only; prices use tabular numerals. Spacing 4/8/12/16/24/32/48, radii 8/12/20/full, touch targets ≥ 44px.
 - Voice: a competent friend ("we found…"), sentence case, no emoji. Light theme and English only for now.
 - Respect reduce motion: route moments and step animations are skipped when it's on.
+
+## Styling (Unistyles 3)
+
+- **Tokens are the theme.** `src/theme/tokens.ts` holds the design-system tokens as plain `as const` data (colors, space, radius, font). `src/theme/unistyles.ts` registers them with `StyleSheet.configure` and augments `UnistylesThemes` / `UnistylesBreakpoints` so the theme is fully typed. Only `light` exists for now; dark is added as a second theme object later.
+- **Never hard-code a design value.** Colors, spacing, radii and font settings always come from `theme.*`. A literal hex code or spacing number in a component is a bug — add a token instead.
+- **Styles live with their component**, via `StyleSheet.create((theme, rt) => ({ ... }))` imported from `react-native-unistyles` (not `react-native`).
+- **Component states are variants**, activated with `styles.useVariants({...})`; variant names double as the prop's literal-union type. Use `compoundVariants` for combinations instead of conditional style merging.
+- **Data-dependent styles are functions** inside the stylesheet (`card: (isSelected: boolean) => ({...})`), called as `styles.card(isSelected)`. No inline style objects built in render.
+- **Device info comes from `rt`** (safe-area insets, font scale, screen) and breakpoints (`{ xs, md }`) inside the stylesheet — not from extra hooks in the component.
+- **Accessibility:** touch targets ≥ 44 (`minHeight: 44`); font sizes respect `rt.fontScale` (cap where layout would break); prices use `theme.font.tabular`.
+- **Shared design-system components** (Button, Chip, Badge, Input, Route, OfferCard, TripSummaryBar) live in `shared/components/`, each matching the design system artifact.
 
 ## Repo shape
 
