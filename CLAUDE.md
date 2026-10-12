@@ -2,6 +2,8 @@
 
 Mobile-first app that plans a whole trip in under five minutes: trip style → destination → spots & dates → day-by-day plan → flights → stay → summary, always steering to the best quality for the money.
 
+**Architecture doc:** `docs/architecture.md` — system map, each service's routes and data, the user flow → backend calls, data model, failure handling, roadmap. Read it before adding a service, route or table, and update it in the same commit when one changes.
+
 Shared engineering rules come from SAPI, mounted at `.claude/` (git submodule). This file supplies what SAPI leaves to each app (see the last section of `.claude/CLAUDE.md`). On app-specific details this file wins; on work culture and the engineering baseline, SAPI wins.
 
 ## Product rules that shape the code
