@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+
+# SAPI submodule — not this repo's code to format.
+.claude/
+
+# Prose and design artboards are authored, not generated. Formatting them would
+# churn files other tracks are editing.
+**/*.md
+docs/design/
+
+supabase/.temp/

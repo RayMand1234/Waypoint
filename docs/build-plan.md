@@ -33,11 +33,11 @@ P0-A ──► P0-B (trips service)
 
 ### P0-A · Repo foundation — one agent, merges first, blocks everything
 
-- [ ] Root: `package.json` (workspaces `apps/*`, `services/*`, `packages/*`; root scripts per `CLAUDE.md` Toolchain), `.nvmrc`, `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `.editorconfig`, `.gitignore` (env files, `dist`, `node_modules`, Expo and Prisma artifacts).
-- [ ] `npx supabase init`: `supabase/config.toml` with email OTP sign-in on and the email template including `{{ .Token }}`; note asymmetric signing keys.
-- [ ] `packages/contracts` (`@waypoint/contracts`): `common/` — `Result`, `ok`, `err`, `assertNever`, `Money`, `ProviderId`, ISO date schema, the HTTP error body; `trips/` — `Profile`, `Trip`, trip status, picks, `TripDay`, `TripStop`, `TripSelection`, and every request/response schema for the trips routes in `docs/architecture.md` §3.
-- [ ] `packages/server-kit` (`@waypoint/server-kit`): `parseEnv(schema)`, `requireUser` (jose + JWKS, per `CLAUDE.md` Auth), `requireService` (`INTERNAL_API_KEY`), `requestId` (`x-request-id` in and forwarded), `errorHandler`, `notFound`, `healthRoute`, `createServiceClient` (timeout + Zod parse + `Result`, forwards bearer token and request id).
-- [ ] Tests: server-kit's `requireUser` against a locally generated ES256 key served as a JWKS stub; `serviceClient` timeout and parse-failure paths.
+- [x] Root: `package.json` (workspaces `apps/*`, `services/*`, `packages/*`; root scripts per `CLAUDE.md` Toolchain), `.nvmrc`, `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `.editorconfig`, `.gitignore` (env files, `dist`, `node_modules`, Expo and Prisma artifacts).
+- [x] `npx supabase init`: `supabase/config.toml` with email OTP sign-in on and the email template including `{{ .Token }}`; note asymmetric signing keys.
+- [x] `packages/contracts` (`@waypoint/contracts`): `common/` — `Result`, `ok`, `err`, `assertNever`, `Money`, `ProviderId`, ISO date schema, the HTTP error body; `trips/` — `Profile`, `Trip`, trip status, picks, `TripDay`, `TripStop`, `TripSelection`, and every request/response schema for the trips routes in `docs/architecture.md` §3.
+- [x] `packages/server-kit` (`@waypoint/server-kit`): `parseEnv(schema)`, `requireUser` (jose + JWKS, per `CLAUDE.md` Auth), `requireService` (`INTERNAL_API_KEY`), `requestId` (`x-request-id` in and forwarded), `errorHandler`, `notFound`, `healthRoute`, `createServiceClient` (timeout + Zod parse + `Result`, forwards bearer token and request id).
+- [x] Tests: server-kit's `requireUser` against a locally generated ES256 key served as a JWKS stub; `serviceClient` timeout and parse-failure paths.
 - **Owns:** root files, `supabase/`, `packages/**`.
 - **Done when:** `npm install && npm run typecheck && npm run lint && npm test` pass on a clean clone.
 
