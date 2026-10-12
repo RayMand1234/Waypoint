@@ -21,13 +21,17 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 - **Styling — decided:** **Unistyles 3**. No MUI, no Tamagui, no NativeWind, no third-party pre-styled component kits — Waypoint's components are our own, built from the design system. Rules in "Styling" below.
 - **Backend — decided:** Node + **Express** (v5). Route handlers are plain functions, no classes, no DI container. Validate request input with Zod at the handler boundary.
 - **Database — decided:** **Supabase**-hosted Postgres, used as plain Postgres. **Prisma** is the data layer (schema file, generated client, plain-object results; no TypeORM, no decorator entities). Prisma uses Supabase's pooled URL at runtime and the direct URL for migrations. The free plan pauses idle projects and has no backups: fine for development, upgrade before real users.
-- **Auth — open:** Supabase Auth (app logs in, Express verifies the token) vs. auth on our own server (e.g. Better Auth). Logins needed: email link, Google, Apple.
+- **Auth — decided:** **Supabase Auth** — email link, Google, Apple.
+  - The app signs in with `supabase-js` (auth calls only) and keeps the session. This is the **single exception** to "the app never calls outside sources directly"; the app never reads or writes data through Supabase.
+  - `apiRequest()` sends the current access token as `Authorization: Bearer <token>`. An Express middleware verifies it against the project's JWKS (`jose`), rejects invalid/expired tokens with 401, and puts the user id on the request. Handlers trust only that id, never one from the body.
+  - Supabase owns the `auth` schema. Prisma never migrates it; Waypoint's own tables (e.g. `profiles`, `trips`) reference the Supabase user id.
+  - Email-link login needs an Expo deep-link scheme registered as a Supabase redirect URL.
 - **Cache — open:** Postgres first; add Redis (e.g. Upstash) only when measured load needs it.
 - **Free-tier services first.**
 
 ## Architecture
 
-- **Three layers:** mobile app → Waypoint backend → external services. **The app never calls outside sources directly.** Its only server is the Waypoint backend, through `apiRequest()` and React Query (SAPI `react-query-server-interaction`).
+- **Three layers:** mobile app → Waypoint backend → external services. **The app never calls outside sources directly** (sole exception: Supabase Auth sign-in, see Stack). Its only data server is the Waypoint backend, through `apiRequest()` and React Query (SAPI `react-query-server-interaction`).
 - **Backend domains:** accounts & trips, trip planner, search aggregator, value scoring, cache & background jobs. One folder per domain.
 - **Provider adapters:** see the contract below. Swapping or adding a source never touches anything outside that source's adapter folder and the provider list.
 - **Day planning is hybrid:** a deterministic algorithm handles area grouping, opening hours and travel times; an LLM only picks spots for the traveler's styles and writes descriptions. Keep the two separate so the algorithm stays testable without the LLM.
