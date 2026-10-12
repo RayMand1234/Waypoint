@@ -1,6 +1,7 @@
-import { httpErrorBody } from '@waypoint/contracts'
+import { httpErrorBody } from '@waypoint/contracts/common'
 import { timingSafeEqual } from 'node:crypto'
 import type { RequestHandler } from 'express'
+import { UNAUTHORIZED } from '../errorCodes.ts'
 
 export const INTERNAL_API_KEY_HEADER = 'x-internal-api-key'
 
@@ -27,7 +28,7 @@ export const requireService = ({
   return (req, res, next) => {
     const presented = req.get(INTERNAL_API_KEY_HEADER)
     if (presented === undefined || !matches(presented, internalApiKey)) {
-      res.status(401).json(httpErrorBody('unauthorized', 'This route is internal.'))
+      res.status(401).json(httpErrorBody(UNAUTHORIZED, 'This route is internal.'))
       return
     }
     next()

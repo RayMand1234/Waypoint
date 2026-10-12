@@ -9,8 +9,12 @@ import { spawn } from 'node:child_process'
 import { connect } from 'node:net'
 import { readdir, readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const SERVICES_DIR = new URL('../services/', import.meta.url).pathname
+// fileURLToPath, not `.pathname`: a checkout path with a space or non-ASCII
+// character comes back percent-encoded from `.pathname`, which then fails
+// `readdir` silently (see the catch below) instead of finding the services.
+const SERVICES_DIR = fileURLToPath(new URL('../services/', import.meta.url))
 const SUPABASE_HOST = '127.0.0.1'
 const SUPABASE_PORT = 54321
 const SUPABASE_PROBE_TIMEOUT_MS = 1_000

@@ -24,16 +24,23 @@ export {
 } from './routes.ts'
 export type {
   CreateTripRequest,
+  CreateTripResponse,
+  GetMeResponse,
+  GetTripResponse,
   ListTripsResponse,
   PatchSelectionBookedRequest,
+  PatchSelectionBookedResponse,
   PutPlanRequest,
   PutPlanResponse,
   PutSelectionRequest,
+  PutSelectionResponse,
   SelectionParams,
   TripDetail,
   TripParams,
   UpdateMeRequest,
+  UpdateMeResponse,
   UpdateTripRequest,
+  UpdateTripResponse,
 } from './routes.ts'
 export { selectionKindSchema, tripSelectionSchema } from './selection.ts'
 export type { SelectionKind, TripSelection } from './selection.ts'

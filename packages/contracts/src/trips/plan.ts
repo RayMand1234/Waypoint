@@ -24,7 +24,9 @@ export const tripDaySchema = z.object({
   id: z.uuid(),
   dayIndex: z.number().int().min(0),
   date: isoDateSchema,
-  stops: z.array(tripStopSchema),
+  // Matches tripDayInputSchema below: the API never accepts an empty day, so
+  // the response type shouldn't claim to allow one either.
+  stops: z.array(tripStopSchema).min(1),
 })
 export type TripDay = z.infer<typeof tripDaySchema>
 

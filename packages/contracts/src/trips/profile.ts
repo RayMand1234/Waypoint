@@ -1,8 +1,11 @@
 import { z } from 'zod'
 import { isoDateTimeSchema } from '../common/index.ts'
 
-/** A home airport as a 3-letter IATA code, e.g. `TLV`. */
-export const iataCodeSchema = z.string().regex(/^[A-Z]{3}$/, 'expected a 3-letter IATA code')
+/** A home airport as a 3-letter IATA code, e.g. `TLV`. Branded: only a parsed value is one. */
+export const iataCodeSchema = z
+  .string()
+  .regex(/^[A-Z]{3}$/, 'expected a 3-letter IATA code')
+  .brand<'IataCode'>()
 export type IataCode = z.infer<typeof iataCodeSchema>
 
 /**

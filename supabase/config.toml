@@ -266,11 +266,11 @@ otp_expiry = 3600
 # Locally these land in the inbox at http://127.0.0.1:54324, not real email.
 [auth.email.template.magic_link]
 subject = "Your Waypoint sign-in code"
-content_path = "./supabase/templates/magic-link.html"
+content_path = "./supabase/templates/signin-code.html"
 
 [auth.email.template.confirmation]
 subject = "Your Waypoint sign-in code"
-content_path = "./supabase/templates/confirmation.html"
+content_path = "./supabase/templates/signin-code.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

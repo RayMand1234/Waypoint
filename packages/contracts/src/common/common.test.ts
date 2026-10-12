@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { assertNever } from './assertNever.ts'
 import { isoDateSchema, isoDateTimeSchema, isoTimeSchema } from './dates.ts'
-import { httpErrorBody, httpErrorBodySchema } from './httpError.ts'
+import { httpErrorBody, httpErrorBodySchema, toHttpErrorCode } from './httpError.ts'
 import { moneySchema } from './money.ts'
 import { err, ok } from './result.ts'
 
@@ -61,7 +61,7 @@ describe('dates', () => {
 
 describe('httpErrorBody', () => {
   it('builds the one error shape every service returns', () => {
-    const body = httpErrorBody('not-found', 'That trip does not exist.')
+    const body = httpErrorBody(toHttpErrorCode('not-found'), 'That trip does not exist.')
     expect(httpErrorBodySchema.parse(body)).toEqual(body)
   })
 
@@ -69,5 +69,9 @@ describe('httpErrorBody', () => {
     expect(
       httpErrorBodySchema.safeParse({ error: { code: 'NotFound', message: 'x' } }).success,
     ).toBe(false)
+  })
+
+  it('toHttpErrorCode throws on a code that is not kebab-case, rather than shipping it', () => {
+    expect(() => toHttpErrorCode('NotFound')).toThrow()
   })
 })

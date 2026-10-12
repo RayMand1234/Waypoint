@@ -34,8 +34,14 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
       ],
-      // Discriminated-union switches must be exhaustive and end in assertNever.
-      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      // Every switch over a union must cover every member (callers still end
+      // theirs in assertNever by convention; the rule itself only checks
+      // coverage). requireDefaultForNonUnion also catches a switch over a
+      // plain string/number with no default.
+      '@typescript-eslint/switch-exhaustiveness-check': [
+        'error',
+        { requireDefaultForNonUnion: true },
+      ],
       // Immutability: no reassigning or mutating a parameter. Express middleware
       // is the exception — writing to `res.locals` is how it passes data on.
       'no-param-reassign': [

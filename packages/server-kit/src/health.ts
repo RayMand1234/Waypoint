@@ -1,4 +1,4 @@
-import { healthResponseSchema } from '@waypoint/contracts'
+import { healthResponseSchema, type ServiceName } from '@waypoint/contracts/common'
 import { Router } from 'express'
 
 /** `GET /health` — every service has one, and it touches nothing else. */
@@ -6,7 +6,7 @@ export const healthRoute = ({
   service,
   now,
 }: {
-  readonly service: string
+  readonly service: ServiceName
   readonly now: () => Date
 }): Router => {
   const router = Router()

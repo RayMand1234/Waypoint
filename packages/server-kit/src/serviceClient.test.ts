@@ -1,4 +1,4 @@
-import { httpErrorBody } from '@waypoint/contracts'
+import { httpErrorBody, toHttpErrorCode } from '@waypoint/contracts/common'
 import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { INTERNAL_API_KEY_HEADER } from './auth/requireService.ts'
@@ -15,6 +15,10 @@ const serve = async (listener: Parameters<typeof startTestServer>[0]): Promise<T
   servers = [...servers, server]
   return server
 }
+
+/** A Node request header is `string | string[] | undefined`; this test only ever sends one value. */
+const singleHeader = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value
 
 afterEach(async () => {
   await Promise.all(servers.map((server) => server.close()))
@@ -39,8 +43,8 @@ describe('createServiceClient', () => {
     const server = await serve((req, res) => {
       seen = {
         authorization: req.headers.authorization,
-        requestId: req.headers[REQUEST_ID_HEADER] as string | undefined,
-        internalKey: req.headers[INTERNAL_API_KEY_HEADER] as string | undefined,
+        requestId: singleHeader(req.headers[REQUEST_ID_HEADER]),
+        internalKey: singleHeader(req.headers[INTERNAL_API_KEY_HEADER]),
         contentType: req.headers['content-type'],
       }
       res.writeHead(200, { 'content-type': 'application/json' })
@@ -143,9 +147,10 @@ describe('createServiceClient', () => {
   })
 
   it('returns the callee error body on a non-2xx response', async () => {
+    const body = httpErrorBody(toHttpErrorCode('not-found'), 'No estimate for that destination.')
     const server = await serve((_req, res) => {
       res.writeHead(404, { 'content-type': 'application/json' })
-      res.end(JSON.stringify(httpErrorBody('not-found', 'No estimate for that destination.')))
+      res.end(JSON.stringify(body))
     })
     const call = createServiceClient({ service: 'search', baseUrl: server.url })
 
@@ -157,12 +162,32 @@ describe('createServiceClient', () => {
         type: 'http',
         service: 'search',
         status: 404,
-        body: { error: { code: 'not-found', message: 'No estimate for that destination.' } },
+        errorBody: { kind: 'recognized', body },
       },
     })
   })
 
-  it('still reports the status when the error body is not the shared shape', async () => {
+  it('tells a JSON body that is not the shared shape apart from no body at all', async () => {
+    const server = await serve((_req, res) => {
+      res.writeHead(502, { 'content-type': 'application/json' })
+      res.end(JSON.stringify({ message: 'bad gateway' }))
+    })
+    const call = createServiceClient({ service: 'search', baseUrl: server.url })
+
+    const result = await call({ path: '/internal/estimates', schema: estimateSchema })
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        type: 'http',
+        service: 'search',
+        status: 502,
+        errorBody: { kind: 'unrecognized', raw: { message: 'bad gateway' } },
+      },
+    })
+  })
+
+  it('reports an unparseable error body separately from an empty one', async () => {
     const server = await serve((_req, res) => {
       res.writeHead(502, { 'content-type': 'text/plain' })
       res.end('Bad Gateway')
@@ -173,7 +198,21 @@ describe('createServiceClient', () => {
 
     expect(result).toEqual({
       ok: false,
-      error: { type: 'http', service: 'search', status: 502, body: undefined },
+      error: { type: 'http', service: 'search', status: 502, errorBody: { kind: 'unparseable' } },
+    })
+  })
+
+  it('reports no body at all as its own outcome', async () => {
+    const server = await serve((_req, res) => {
+      res.writeHead(503).end()
+    })
+    const call = createServiceClient({ service: 'search', baseUrl: server.url })
+
+    const result = await call({ path: '/internal/estimates', schema: estimateSchema })
+
+    expect(result).toEqual({
+      ok: false,
+      error: { type: 'http', service: 'search', status: 503, errorBody: { kind: 'none' } },
     })
   })
 

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { isoDateSchema, isoDateTimeSchema, moneySchema, providerIdSchema } from '../common/index.ts'
+import { isoDateSchema } from '../common/index.ts'
 import { tripDayInputSchema, tripDaySchema } from './plan.ts'
 import { iataCodeSchema, profileSchema } from './profile.ts'
 import { selectionKindSchema, tripSelectionSchema } from './selection.ts'
@@ -26,15 +26,25 @@ export type TripDetail = z.infer<typeof tripDetailSchema>
 /* ── GET /me · PATCH /me ───────────────────────────────────────────────── */
 
 export const getMeResponseSchema = profileSchema
+export type GetMeResponse = z.infer<typeof getMeResponseSchema>
 
-/** `null` clears a field; an absent field is left alone. */
+/**
+ * `null` clears a field; an absent field is left alone. `z.exactOptional`
+ * (not plain `.optional()`) is what makes that distinction real under
+ * `exactOptionalPropertyTypes`: a plain optional's inferred value type still
+ * includes `| undefined`, so `{ name: undefined }` would type-check as if it
+ * meant "leave alone" while actually sending an explicit `undefined` over the
+ * wire. `exactOptional` keeps the key itself optional but refuses a literal
+ * `undefined` value, so "leave alone" can only be expressed by omitting the key.
+ */
 export const updateMeRequestSchema = z.strictObject({
-  name: z.string().min(1).nullable().optional(),
-  homeAirport: iataCodeSchema.nullable().optional(),
+  name: z.exactOptional(z.string().min(1).nullable()),
+  homeAirport: z.exactOptional(iataCodeSchema.nullable()),
 })
 export type UpdateMeRequest = z.infer<typeof updateMeRequestSchema>
 
 export const updateMeResponseSchema = profileSchema
+export type UpdateMeResponse = z.infer<typeof updateMeResponseSchema>
 
 /* ── GET /trips · POST /trips ──────────────────────────────────────────── */
 
@@ -54,6 +64,7 @@ export const createTripRequestSchema = z.strictObject({
 export type CreateTripRequest = z.infer<typeof createTripRequestSchema>
 
 export const createTripResponseSchema = tripSchema
+export type CreateTripResponse = z.infer<typeof createTripResponseSchema>
 
 /* ── GET · PATCH · DELETE /trips/:id ───────────────────────────────────── */
 
@@ -61,27 +72,30 @@ export const tripParamsSchema = z.object({ id: z.uuid() })
 export type TripParams = z.infer<typeof tripParamsSchema>
 
 export const getTripResponseSchema = tripDetailSchema
+export type GetTripResponse = z.infer<typeof getTripResponseSchema>
 
 /**
  * Every step's picks go through here as the traveler moves, so a draft survives
  * closing the app. `status` is accepted but the service decides whether the
- * transition is legal.
+ * transition is legal. See `updateMeRequestSchema` above for why clearable
+ * fields use `z.exactOptional` rather than plain `.optional()`.
  */
 export const updateTripRequestSchema = z.strictObject({
-  status: tripStatusSchema.optional(),
-  styles: z.array(tripStyleSchema).optional(),
-  pace: tripPaceSchema.optional(),
-  destinationId: z.string().min(1).nullable().optional(),
-  destinationName: z.string().min(1).nullable().optional(),
-  startDate: isoDateSchema.nullable().optional(),
-  endDate: isoDateSchema.nullable().optional(),
-  adults: z.number().int().min(1).optional(),
-  children: z.number().int().min(0).optional(),
-  spots: z.array(tripSpotSchema).optional(),
+  status: z.exactOptional(tripStatusSchema),
+  styles: z.exactOptional(z.array(tripStyleSchema)),
+  pace: z.exactOptional(tripPaceSchema),
+  destinationId: z.exactOptional(z.string().min(1).nullable()),
+  destinationName: z.exactOptional(z.string().min(1).nullable()),
+  startDate: z.exactOptional(isoDateSchema.nullable()),
+  endDate: z.exactOptional(isoDateSchema.nullable()),
+  adults: z.exactOptional(z.number().int().min(1)),
+  children: z.exactOptional(z.number().int().min(0)),
+  spots: z.exactOptional(z.array(tripSpotSchema)),
 })
 export type UpdateTripRequest = z.infer<typeof updateTripRequestSchema>
 
 export const updateTripResponseSchema = tripSchema
+export type UpdateTripResponse = z.infer<typeof updateTripResponseSchema>
 
 /* ── PUT /trips/:id/plan ───────────────────────────────────────────────── */
 
@@ -102,20 +116,22 @@ export const selectionParamsSchema = z.object({
 })
 export type SelectionParams = z.infer<typeof selectionParamsSchema>
 
-/** The chosen offer, snapshotted as shown. `kind` comes from the path, not the body. */
-export const putSelectionRequestSchema = z.strictObject({
-  offerSnapshot: z.record(z.string(), z.unknown()),
-  provider: providerIdSchema,
-  deepLink: z.url(),
-  price: moneySchema,
-  checkedAt: isoDateTimeSchema,
-})
+/**
+ * The chosen offer, snapshotted as shown. `kind` comes from the path, not the
+ * body — derived from `tripSelectionSchema` by omitting `kind` and the
+ * server-set `bookedAt`, so the two shapes cannot drift apart.
+ */
+export const putSelectionRequestSchema = z.strictObject(
+  tripSelectionSchema.omit({ kind: true, bookedAt: true }).shape,
+)
 export type PutSelectionRequest = z.infer<typeof putSelectionRequestSchema>
 
 export const putSelectionResponseSchema = tripSelectionSchema
+export type PutSelectionResponse = z.infer<typeof putSelectionResponseSchema>
 
 /** The traveler ticking a row as booked on the partner site, or unticking it. */
 export const patchSelectionBookedRequestSchema = z.strictObject({ booked: z.boolean() })
 export type PatchSelectionBookedRequest = z.infer<typeof patchSelectionBookedRequestSchema>
 
 export const patchSelectionBookedResponseSchema = tripSelectionSchema
+export type PatchSelectionBookedResponse = z.infer<typeof patchSelectionBookedResponseSchema>
