@@ -62,7 +62,7 @@ flowchart LR
   PLANNER --> LLM
 ```
 
-**Stack:** TypeScript strict everywhere · Expo (React Native, dev builds) · Unistyles 3 · TanStack React Query · Express 5 · Prisma · Supabase (Postgres + Auth) · Zod · npm-workspaces monorepo.
+**Stack:** TypeScript strict everywhere · Expo (React Native, dev builds) · Unistyles 3 · TanStack React Query · Express 5 · TypeORM · Supabase (Postgres + Auth) · Zod · npm-workspaces monorepo.
 
 **Repo:**
 
@@ -209,7 +209,7 @@ The app orchestrates the flow; services stay independent. The only user-path cal
 
 ## 5. Data model
 
-One Supabase Postgres. Each service owns one schema and its own Prisma migrations. **No foreign keys cross schemas:** a trip stores a destination id or an offer snapshot by value, and the owning service stays free to change its tables.
+One Supabase Postgres. Each service owns one schema and its own TypeORM migrations. **No foreign keys cross schemas:** a trip stores a destination id or an offer snapshot by value, and the owning service stays free to change its tables.
 
 ### `trips` schema
 
@@ -451,7 +451,7 @@ flowchart LR
 | Flights | `FLIGHT_PROVIDERS=fake` | `aviasales` |
 | Day-plan text | `LLM_PROVIDER=fake` | the real LLM API |
 
-Commands: `npx supabase start` / `stop`, then each service with its own dev script. Prisma owns migrations (`prisma migrate dev` per service); the Supabase CLI only runs the database. A real phone reaches the services through the computer's local network IP, not `127.0.0.1`. Full rules: root `CLAUDE.md`, "Local development".
+Commands: `npx supabase start` / `stop`, then each service with its own dev script. TypeORM owns migrations (`typeorm migration:run` per service); the Supabase CLI only runs the database. A real phone reaches the services through the computer's local network IP, not `127.0.0.1`. Full rules: root `CLAUDE.md`, "Local development".
 
 ## 7. Phased roadmap
 

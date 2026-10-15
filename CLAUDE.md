@@ -24,7 +24,7 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 - **App — decided:** React Native (Expo), New Architecture, run as an Expo **development build** (not Expo Go — Unistyles ships native code).
 - **Styling — decided:** **Unistyles 3**. No MUI, no Tamagui, no NativeWind, no third-party pre-styled component kits — Waypoint's components are our own, built from the design system. Rules in "Styling" below.
 - **Backend — decided:** Node + **Express** (v5). Route handlers are plain functions, no classes, no DI container. Validate request input with Zod at the handler boundary.
-- **Database — decided:** **Supabase**-hosted Postgres, used as plain Postgres. **Prisma** is the data layer (schema file, generated client, plain-object results; no TypeORM, no decorator entities). Prisma uses Supabase's pooled URL at runtime and the direct URL for migrations. The free plan pauses idle projects and has no backups: fine for development, upgrade before real users.
+- **Database — decided:** **Supabase**-hosted Postgres, used as plain Postgres. **TypeORM** is the data layer: one `DataSource` per service, `@Entity` classes mapping its tables. Entity classes are the one deliberate exception to "no classes" — TypeORM's decorator mapping requires them — but nothing else about them is exceptional: a domain's `queries.ts` still takes its repository as a plain function argument and still returns plain objects, never an entity instance, past that file. TypeORM uses Supabase's pooled URL at runtime and the direct URL for migrations. The free plan pauses idle projects and has no backups: fine for development, upgrade before real users.
 - **Auth — decided:** **Supabase Auth** — email, Google, Apple. Implementation in "Auth" below.
 - **Cache — open:** Postgres first; add Redis (e.g. Upstash) only when measured load needs it.
 - **Free-tier services first.**
@@ -52,7 +52,7 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 - `requireUser` (in `@waypoint/server-kit`, used by every service) verifies the token **locally** with `jose`: `createRemoteJWKSet(<SUPABASE_URL>/auth/v1/.well-known/jwks.json)` + `jwtVerify` checking issuer `<SUPABASE_URL>/auth/v1` and audience `authenticated`. Missing/invalid → 401. On success `res.locals.userId = payload.sub`.
 - Handlers trust only `res.locals.userId`, never a user id from the body or query.
 - The project must use **asymmetric JWT signing keys** (ES256), not the legacy shared secret.
-- Supabase owns the `auth` schema; Prisma never migrates it. Waypoint's `Profile` is keyed by the Supabase user id (`userId` = `auth.users.id` = JWT `sub`) and is created with an `upsert` on the user's first authenticated request.
+- Supabase owns the `auth` schema; TypeORM never migrates it. Waypoint's `Profile` is keyed by the Supabase user id (`userId` = `auth.users.id` = JWT `sub`) and is created with an `upsert` on the user's first authenticated request.
 - Never ship the secret / `service_role` key in the app; only the publishable key goes in `EXPO_PUBLIC_*` env vars.
 - Sign-out ends the session, but an issued access token stays valid until expiry (~1h). Acceptable for now; if instant revoke is needed, also check the token's `session_id` exists in `auth.sessions`.
 
@@ -164,7 +164,7 @@ waypoint/
 
 **Data**
 
-- One Supabase Postgres, **one Postgres schema per service** (`trips`, `search`, `planner`, `jobs`). Each service has its own `prisma/schema.prisma` and migrations, pointed at its own schema via the connection URL (`?schema=<service>`), and never touches another schema. Need another service's data → call its API.
+- One Supabase Postgres, **one Postgres schema per service** (`trips`, `search`, `planner`, `jobs`). Each service has its own TypeORM entities and migrations, pointed at its own schema via the connection URL (`?schema=<service>`), and never touches another schema. Need another service's data → call its API.
 - Supabase's `auth` schema belongs to Supabase; no service migrates it.
 
 **Packages**
@@ -191,7 +191,7 @@ Development runs against a **local Supabase stack and fake providers** by defaul
 - **Supabase CLI** is a root dev dependency (`npx supabase …`); config lives in `supabase/config.toml`. Docker must be running.
   - `npx supabase start` starts Postgres, Auth, Studio and a local email inbox. `npx supabase stop` stops it and keeps the data.
   - Default local addresses: API + Auth `http://127.0.0.1:54321` · Postgres `postgresql://postgres:postgres@127.0.0.1:54322/postgres` · Studio `http://127.0.0.1:54323` · email inbox `http://127.0.0.1:54324`. Take keys from `npx supabase status`, never hard-code them.
-- **Database:** each service's `DATABASE_URL` points at local Postgres with its own `?schema=<service>`. Migrations are Prisma's (`prisma migrate dev` per service); the Supabase CLI runs the database but does not own Waypoint's migrations.
+- **Database:** each service's `DATABASE_URL` points at local Postgres with its own `?schema=<service>`. Migrations are TypeORM's (`typeorm migration:run` per service); the Supabase CLI runs the database but does not own Waypoint's migrations.
 - **Auth:** email login codes land in the local inbox, not real email. `requireUser` works unchanged — only `SUPABASE_URL` differs (local Auth serves its own JWKS). Google and Apple sign-in need the internet; use email login offline.
 - **Providers:** the composition root picks providers from env, e.g. `HOTEL_PROVIDERS=fake` (default in development) or `HOTEL_PROVIDERS=liteapi`; same for `FLIGHT_PROVIDERS`. The fake providers return the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults). The planner's LLM step has a fake too (fixed descriptions), selected with `LLM_PROVIDER=fake`. Unknown provider names fail at startup, not at request time.
 - **Env:** each service and the app has a committed `.env.example` with the local defaults; real `.env` / `.env.local` files are git-ignored. Env vars are parsed with Zod at startup (`@waypoint/server-kit`), and a service refuses to start with a missing or invalid value.
@@ -217,16 +217,17 @@ Development runs against a **local Supabase stack and fake providers** by defaul
 
 ```
 src/
-  index.ts          composition root ONLY: parseEnv → build deps (Prisma client, providers, service clients) → createApp(deps) → listen
+  index.ts          composition root ONLY: parseEnv → build deps (TypeORM DataSource, providers, service clients) → createApp(deps) → listen
   app.ts            createApp(deps): Express app with middleware, routers, health, error handler — no listen, no env reads (tests use it)
   env.ts            Zod env schema for this service
+  entities/         TypeORM @Entity classes for this service's schema only
   <domain>/
     routes.ts       thin HTTP: parse input with the contract schema → call logic/queries → map Result to status + body
-    queries.ts      Prisma reads/writes only; returns plain objects, never Prisma model types past this file
+    queries.ts      TypeORM repository reads/writes only; returns plain objects, never an entity instance past this file
     logic.ts        pure functions: no I/O, no Date.now()/random (pass `now` in), fully unit-tested
     providers/      only where an external source exists (search, planner): one folder per provider + fake/
     *.test.ts       next to what they test
-prisma/schema.prisma
+migrations/
 .env.example
 ```
 
