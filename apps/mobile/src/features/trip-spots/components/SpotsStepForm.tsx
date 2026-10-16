@@ -9,6 +9,7 @@ import {
 import { plural } from '@/shared/utils/text';
 import { useSpotsForm } from '../hooks/useSpotsForm';
 import { LengthControl } from './LengthControl';
+import { SpotDetailsSheet } from './SpotDetailsSheet';
 import { SpotList } from './SpotList';
 import { TripBasics } from './TripBasics';
 
@@ -61,7 +62,18 @@ export const SpotsStepForm = ({
         fits={step.fits}
         fitLabel={step.fitLabel}
         onToggle={step.toggleSpot}
+        onInfo={step.openDetails}
       />
+      {step.details !== undefined && (
+        <SpotDetailsSheet
+          spot={step.details}
+          city={trip.destinationName}
+          isTopPick={step.topPicks.has(step.details.id)}
+          isSelected={values.spotIds.includes(step.details.id)}
+          onToggle={step.toggleSpot}
+          onClose={step.closeDetails}
+        />
+      )}
     </StepLayout>
   );
 };

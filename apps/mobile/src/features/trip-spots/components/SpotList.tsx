@@ -2,8 +2,15 @@ import type { Spot } from '@waypoint/contracts/destinations';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Text } from '@/shared/components';
-import { spotMeta, topPickIds } from '../utils/spotRowModel';
-import { SpotRow } from './SpotRow';
+import {
+  cardPhotoUrl,
+  spotMeta,
+  topPickIds,
+  topPicksFirst,
+} from '../utils/spotRowModel';
+import { SpotCard } from './SpotCard';
+
+const COLUMNS = 2;
 
 type SpotListProps = {
   readonly spots: readonly Spot[];
@@ -11,17 +18,20 @@ type SpotListProps = {
   readonly fitLabel: string;
   readonly fits: boolean;
   readonly onToggle: (spotId: string) => void;
+  readonly onInfo: (spotId: string) => void;
 };
 
-/** "Recommended spots" with the fit check, then one checkbox row per spot (best fit first). */
+/** "Recommended spots" with the fit check, then a two-column grid of photo cards: top picks first, then best fit. */
 export const SpotList = ({
   spots,
   selectedIds,
   fitLabel,
   fits,
   onToggle,
+  onInfo,
 }: SpotListProps) => {
   const topPicks = topPickIds(spots);
+  const ordered = topPicksFirst(spots, topPicks);
 
   if (spots.length === 0)
     return (
@@ -46,19 +56,32 @@ export const SpotList = ({
           {fitLabel}
         </Text>
       </View>
-      <View style={styles.list}>
-        {spots.map((spot, index) => (
-          <SpotRow
-            key={spot.id}
-            name={spot.name}
-            meta={spotMeta(spot)}
-            isTopPick={topPicks.has(spot.id)}
-            isSelected={selectedIds.includes(spot.id)}
-            isFirst={index === 0}
-            onPress={() => {
-              onToggle(spot.id);
-            }}
-          />
+      <View style={styles.grid}>
+        {Array.from({ length: Math.ceil(ordered.length / COLUMNS) }, (_, row) =>
+          ordered.slice(row * COLUMNS, (row + 1) * COLUMNS),
+        ).map((pair) => (
+          <View key={pair[0]?.id} style={styles.row}>
+            {pair.map((spot) => (
+              <SpotCard
+                key={spot.id}
+                name={spot.name}
+                meta={spotMeta(spot)}
+                photoUrl={
+                  spot.photo === null ? null : cardPhotoUrl(spot.photo.url)
+                }
+                isTopPick={topPicks.has(spot.id)}
+                isSelected={selectedIds.includes(spot.id)}
+                onPress={() => {
+                  onToggle(spot.id);
+                }}
+                onInfo={() => {
+                  onInfo(spot.id);
+                }}
+              />
+            ))}
+            {/* An odd last card keeps its column's width. */}
+            {pair.length < COLUMNS && <View style={styles.filler} />}
+          </View>
         ))}
       </View>
     </View>
@@ -74,11 +97,14 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'baseline',
     justifyContent: 'space-between',
   },
-  list: {
-    borderRadius: theme.radius.lg,
-    borderWidth: theme.size.hairline,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors['surface-card'],
-    overflow: 'hidden',
+  grid: {
+    gap: theme.space[3],
+  },
+  row: {
+    flexDirection: 'row',
+    gap: theme.space[3],
+  },
+  filler: {
+    flex: 1,
   },
 }));
