@@ -2,14 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { IsoDate } from '@waypoint/contracts/common';
 import type { Spot } from '@waypoint/contracts/destinations';
 import type { TripDetail } from '@waypoint/contracts/trips';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useStepNavigation, useUpdateTrip } from '@/features/trip-flow';
 import { addDays, todayOf, tripDays } from '@/shared/utils/dates';
 import { errorMessage } from '@/shared/utils/errorMessage';
 import { plural } from '@/shared/utils/text';
 import { fitLabel, fitsIn, suggestedSpotIds } from '../utils/spotFit';
-import { toggleId } from '../utils/spotRowModel';
+import { toggleId, topPickIds } from '../utils/spotRowModel';
 import {
   spotsFormSchema,
   type SpotsFormValues,
@@ -43,7 +43,7 @@ const defaultsFor = (
   };
 };
 
-/** Step 3: dates, travelers and spots, saved together on Continue, then on to the stay. */
+/** Step 3: dates, travelers and spots (with a spot's details sheet), saved together on Continue, then on to the stay. */
 export const useSpotsForm = (trip: TripDetail, spots: readonly Spot[]) => {
   const update = useUpdateTrip(trip.id);
   const navigation = useStepNavigation(trip.id);
@@ -64,6 +64,8 @@ export const useSpotsForm = (trip: TripDetail, spots: readonly Spot[]) => {
   const days = tripDays(startDate, endDate);
   const picked = spots.filter((spot) => spotIds.includes(spot.id));
   const set = form.setValue;
+  const [detailsId, setDetailsId] = useState<string | undefined>(undefined);
+  const topPicks = useMemo(() => topPickIds(spots), [spots]);
 
   const submit = form.handleSubmit(({ spotIds: ids, ...values }) => {
     const chosen = spots
@@ -105,6 +107,13 @@ export const useSpotsForm = (trip: TripDetail, spots: readonly Spot[]) => {
     },
     toggleSpot: (spotId: string) => {
       set('spotIds', toggleId(spotIds, spotId));
+    },
+    topPicks,
+    /** The spot whose details sheet is open. */
+    details: spots.find((spot) => spot.id === detailsId),
+    openDetails: setDetailsId,
+    closeDetails: () => {
+      setDetailsId(undefined);
     },
     submit,
     navigation,

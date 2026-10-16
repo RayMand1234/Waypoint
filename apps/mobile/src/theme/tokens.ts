@@ -139,7 +139,9 @@ export const componentSize = {
   'destination-thumb': 96,
   checkbox: 24,
   'checkbox-border': 1.5,
-  'spot-row-h': 60,
+  /** Spot cards: the photo's width to height, and the info button's circle. */
+  'spot-card-photo-ratio': 4 / 3,
+  'spot-info-circle': 28,
   'sheet-list-max': 320,
   'moment-road-stroke': 2.5,
   'moment-trail-stroke': 3.5,
@@ -178,6 +180,8 @@ export const componentSize = {
   /** Stay details sheet (Stay.dc.html): the big photo and its thumbnails. */
   'stay-photo-h': 196,
   'stay-thumb-h': 60,
+  /** Spot details sheet: the spot's photo. */
+  'spot-photo-h': 196,
   /** Flight cards (Flights.dc.html): the "Out" / "Back" column. */
   'flight-leg-label-w': 40,
   /** Day plan timeline (Plan.dc.html). */

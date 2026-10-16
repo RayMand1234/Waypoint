@@ -4,7 +4,20 @@ import { addDays, todayOf } from '@/shared/utils/dates';
 import { dayState, monthGrid, pickDay, shiftMonth } from './calendar';
 import { fitLabel, suggestedSpotIds } from './spotFit';
 import { formatDuration } from '@/shared/utils/format';
-import { spotMeta, toggleId, topPickIds } from './spotRowModel';
+import {
+  feeText,
+  formatHours,
+  googleMapsUrl,
+  photoCredit,
+  spotFacts,
+} from './spotDetails';
+import {
+  cardPhotoUrl,
+  spotMeta,
+  toggleId,
+  topPickIds,
+  topPicksFirst,
+} from './spotRowModel';
 
 const date = (text: string) => isoDateSchema.parse(text);
 
@@ -143,8 +156,63 @@ describe('spot rows', () => {
     );
   });
 
+  it('lists top picks first, each group keeping its order', () => {
+    const spots = ['a', 'b', 'c', 'd'].map((id) => ({ id }));
+
+    expect(
+      topPicksFirst(spots, new Set(['d', 'b'])).map((spot) => spot.id),
+    ).toEqual(['b', 'd', 'a', 'c']);
+  });
+
+  it('asks Wikimedia for a card-sized thumbnail, leaving other photos alone', () => {
+    const base =
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/T.jpg';
+
+    expect(cardPhotoUrl(`${base}/1280px-T.jpg?x=1`)).toBe(
+      `${base}/500px-T.jpg?x=1`,
+    );
+    expect(cardPhotoUrl(`${base}/330px-T.jpg`)).toBe(`${base}/330px-T.jpg`);
+    expect(cardPhotoUrl('https://example.com/a.jpg')).toBe(
+      'https://example.com/a.jpg',
+    );
+  });
+
   it('toggles a picked id', () => {
     expect(toggleId(['a', 'b'], 'a')).toEqual(['b']);
     expect(toggleId(['b'], 'a')).toEqual(['b', 'a']);
+  });
+});
+
+describe('spot details', () => {
+  it('words OpenStreetMap hours one rule per line', () => {
+    expect(
+      formatHours('Oct-Apr: Tu-Su 10:00-17:30; May-Sep 10:00-18:30; Mo off'),
+    ).toBe('Oct–Apr: Tue–Sun 10:00–17:30\nMay–Sep 10:00–18:30\nMon closed');
+  });
+
+  it('never shows an unknown fee', () => {
+    expect(feeText({ kind: 'free' })).toBe('Free');
+    expect(feeText({ kind: 'paid', price: null })).toBe('Paid entry');
+    expect(feeText({ kind: 'unknown' })).toBeUndefined();
+  });
+
+  it('lists only the facts research found', () => {
+    expect(spotFacts(spot('1', 90))).toEqual([
+      ['Visit', 'About 1h 30m'],
+      ['Good for', 'Culture, Views'],
+    ]);
+  });
+
+  it('searches Google Maps by name in the city', () => {
+    expect(googleMapsUrl('Belém Tower', 'Lisbon')).toBe(
+      'https://www.google.com/maps/search/?api=1&query=Bel%C3%A9m%20Tower%2C%20Lisbon',
+    );
+  });
+
+  it('credits the photo, author when known', () => {
+    expect(photoCredit({ author: 'Ann', license: 'CC BY 4.0' })).toBe(
+      'Photo: Ann · CC BY 4.0',
+    );
+    expect(photoCredit({ author: null, license: 'CC0' })).toBe('Photo: CC0');
   });
 });
