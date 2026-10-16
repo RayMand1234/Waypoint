@@ -15,6 +15,7 @@ export type LiteApiClient = {
     path: string,
     body: unknown,
     schema: Schema,
+    /** Carries the call's own deadline; without it the client's default applies. */
     signal?: AbortSignal,
   ) => ProviderResult<z.output<Schema>>;
 };
@@ -88,7 +89,6 @@ export const createLiteApiClient = ({
     schema: Schema,
     signal: AbortSignal | undefined,
   ): ProviderResult<z.output<Schema>> => {
-    const timeout = AbortSignal.timeout(timeoutMs);
     const headers = { accept: 'application/json', 'x-api-key': apiKey };
 
     try {
@@ -98,8 +98,9 @@ export const createLiteApiClient = ({
           init.body === undefined
             ? headers
             : { ...headers, 'content-type': 'application/json' },
-        signal:
-          signal === undefined ? timeout : AbortSignal.any([timeout, signal]),
+        // A caller's own signal carries its deadline (live searches set one
+        // per kind — flights take longer than hotels); otherwise the default.
+        signal: signal ?? AbortSignal.timeout(timeoutMs),
       });
       const body = await readJson(response);
 

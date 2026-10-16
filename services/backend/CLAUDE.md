@@ -10,7 +10,7 @@
 |---|---|
 | `routes/` | path + method → controller handler. `routes/index.ts` puts every API router behind `requireUser`. |
 | `controllers/` | parse input with the `@waypoint/contracts` schema (`http/validate.ts`), call one service, `sendResult` (maps `ServiceError` → status in `http/respond.ts`). No logic. |
-| `services/` | orchestration + rules. Returns `Result<T, ServiceError>`, never HTTP. Pure rules in `*.logic.ts` / `value.ts` (no I/O, `now` passed in). |
+| `services/` | orchestration + rules. Returns `Result<T, ServiceError>`, never HTTP. Pure rules in `*.logic.ts` / `value.ts` (no I/O, `now` passed in). `planner/` is the day planner: pure modules (`frames` → `assign` → `schedule` → `plan`) that `plans.service.ts` feeds with the trip, its spots, stay and flights. |
 | `repositories/` | TypeORM only; every trip query scoped to the user id; returns contract types (parsed), never entities. |
 | `providers/` | `types.ts` = Waypoint's provider interfaces (`GeoSource`, `HotelCatalog`, `HotelProvider`, `FlightProvider`; providers take `HotelSearchQuery`, never a `stops` location — the service resolves it first); `liteapi/` = the only adapter (client, raw Zod schemas, mappers, deep links); `searchAcross.ts` = all providers in parallel, per-provider timeout, failures as `ProviderError`s. |
 | `observability/` | request context (AsyncLocalStorage), winston logger, traced fetch. |

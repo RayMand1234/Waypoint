@@ -34,7 +34,7 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 - **Three layers:** mobile app → Waypoint backend → external services. **The app never calls outside sources directly** (sole exception: Supabase Auth sign-in, see Stack). Its only data server is the Waypoint backend, through `apiRequest()` and React Query (SAPI `react-query-server-interaction`).
 - **Backend — one service:** `services/backend` (Express 5) serves the app: profiles, trips, geo reference data, hotels, flights. Layered routes → controllers → services → repositories / providers (see "Code conventions"). Split into more services only when a measured need appears. See "Repo shape".
 - **Provider adapters:** see the contract below. Swapping or adding a source never touches anything outside that source's adapter folder and the provider list.
-- **Day planning is hybrid:** a deterministic algorithm handles area grouping, opening hours and travel times; an LLM only picks spots for the traveler's styles and writes descriptions. Keep the two separate so the algorithm stays testable without the LLM.
+- **Day planning is deterministic:** the backend planner (`services/backend/src/services/planner/`) groups spots by area, respects opening hours, the pace and the flights, and times each day. An LLM may later write descriptions or make soft choices; keep it out of the algorithm so the algorithm stays testable without it.
 - **Destinations at launch:** a curated list of 50–100 cities tagged by style.
 
 ## Auth (Supabase Auth — agreed implementation)
@@ -122,7 +122,7 @@ Rules:
 - **Data-dependent styles are functions** inside the stylesheet (`card: (isSelected: boolean) => ({...})`), called as `styles.card(isSelected)`. No inline style objects built in render.
 - **Device info comes from `rt`** (safe-area insets, font scale, screen) and breakpoints (`{ xs, md }`) inside the stylesheet — not from extra hooks in the component.
 - **Accessibility:** touch targets ≥ 44 (`minHeight: 44`); font sizes respect `rt.fontScale` (cap where layout would break); prices use `theme.font.tabular`.
-- **Shared design-system components** (Button, Chip, Badge, Input, Route, OfferCard, TripSummaryBar) live in `shared/components/`, each built from `docs/design/system/components/<Name>/` (guidelines + preview). Variants and props follow the guideline's names (`kind: 'primary' | 'secondary' | 'ghost'`, `--best` → `isBestValue`, …).
+- **Shared design-system components** (Button, Chip, Badge, Input, Route, OfferCard, TripSummaryBar) live in `shared/components/`, each built from `docs/design/system/components/<Name>/` (guidelines + preview). Variants and props follow the guideline's names (`kind: 'primary' | 'secondary' | 'ghost'`, `--best` → `isBestValue`, …). Pieces two offer steps share (OfferSources for "Where we found it", DetailRows for an offer's terms) live there too, made from the screen frames.
 - **Icons:** `lucide-react-native`, 1.75 stroke, 20/24 px, in `ink` / `ink-muted` (`on-midnight` on midnight fills). No emoji.
 
 

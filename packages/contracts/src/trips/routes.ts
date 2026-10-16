@@ -132,6 +132,29 @@ export type PutPlanRequest = z.infer<typeof putPlanRequestSchema>;
 export const putPlanResponseSchema = z.object({ days: z.array(tripDaySchema) });
 export type PutPlanResponse = z.infer<typeof putPlanResponseSchema>;
 
+/* ── POST /trips/:id/plan ──────────────────────────────────────────────── */
+
+/**
+ * Builds the day plan and saves it. Without `days` the planner groups the
+ * trip's spots into days itself; with them it keeps each day's spots (an
+ * edit: a spot removed or moved) and only orders and times them. Spots that
+ * don't fit are left out — the trip's spots not in the plan.
+ */
+export const buildPlanRequestSchema = z.strictObject({
+  days: z
+    .array(
+      z.strictObject({
+        date: isoDateSchema,
+        spotIds: z.array(z.string().min(1)),
+      }),
+    )
+    .optional(),
+});
+export type BuildPlanRequest = z.infer<typeof buildPlanRequestSchema>;
+
+export const buildPlanResponseSchema = putPlanResponseSchema;
+export type BuildPlanResponse = PutPlanResponse;
+
 /* ── PUT /trips/:id/selections/:kind · PATCH …/booked ──────────────────── */
 
 export const selectionParamsSchema = z.object({

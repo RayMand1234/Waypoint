@@ -15,10 +15,16 @@ type TripsSectionProps = {
     | { readonly status: 'success'; readonly data: readonly TripListItem[] };
   readonly onRetry: () => void;
   readonly onOpen: (trip: TripListItem, target: TripTarget) => void;
+  readonly onDelete: (tripId: string, title: string) => void;
 };
 
 /** "My waypoints": drafts, planned, booked and past trips, newest first. */
-export const TripsSection = ({ trips, onRetry, onOpen }: TripsSectionProps) => (
+export const TripsSection = ({
+  trips,
+  onRetry,
+  onOpen,
+  onDelete,
+}: TripsSectionProps) => (
   <View style={styles.section}>
     <Text variant="title" accessibilityRole="header">
       My waypoints
@@ -38,6 +44,9 @@ export const TripsSection = ({ trips, onRetry, onOpen }: TripsSectionProps) => (
             card={card}
             onPress={() => {
               onOpen(trip, card.target);
+            }}
+            onDelete={() => {
+              onDelete(trip.id, card.title);
             }}
           />
         );

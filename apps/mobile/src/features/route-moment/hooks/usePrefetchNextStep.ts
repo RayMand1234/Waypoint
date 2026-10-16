@@ -5,6 +5,8 @@ import {
 } from '@tanstack/react-query';
 import type { TripDetail } from '@waypoint/contracts/trips';
 import { destinationsQuery } from '@/features/trip-destination';
+import { prefetchFlights } from '@/features/trip-flights';
+import { prefetchPlan } from '@/features/trip-plan';
 import { spotsQuery } from '@/features/trip-spots';
 import { prefetchStays } from '@/features/trip-stay';
 import { queryKeys } from '@/shared/utils/queryKeys';
@@ -22,9 +24,9 @@ const PREFETCH: Readonly<Record<FinishedStep, Prefetch>> = {
   2: (queryClient, trip) =>
     warmQuery(queryClient, spotsQuery(trip.destinationId, trip.styles)),
   3: prefetchStays,
-  // Flights and the day plan have no data to load yet.
-  4: NOTHING_YET,
-  5: NOTHING_YET,
+  4: prefetchFlights,
+  5: prefetchPlan,
+  // The summary has no data to load yet.
   6: NOTHING_YET,
 };
 

@@ -13,7 +13,9 @@ export const stepHref = (tripId: string, step: StepKey): Href => {
     case 'stay':
       return { pathname: '/trip/[id]/stay', params: { id: tripId } };
     case 'flights':
+      return { pathname: '/trip/[id]/flights', params: { id: tripId } };
     case 'plan':
+      return { pathname: '/trip/[id]/plan', params: { id: tripId } };
     case 'summary':
     case 'booked':
       return { pathname: '/trip/[id]/[step]', params: { id: tripId, step } };

@@ -67,6 +67,7 @@ const fakeServices = (logger: Logger) => {
         Promise.reject(new Error('bug in the flights service')),
       ),
     },
+    plans: { build: vi.fn(unused) },
     trips: {
       list: vi.fn(() => {
         logger.info('listing trips');

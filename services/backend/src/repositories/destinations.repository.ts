@@ -54,6 +54,8 @@ export type DestinationsRepository = {
   readonly addSearched: (destination: SearchedDestination) => Promise<void>;
   readonly spotsOf: (destinationId: string) => Promise<Spot[]>;
   readonly findSpot: (spotId: string) => Promise<Spot | undefined>;
+  /** The published spots among these ids (others — unknown, unpublished — are left out). */
+  readonly spotsByIds: (spotIds: readonly string[]) => Promise<Spot[]>;
   /** The Google place id of a published spot, for its live rating. */
   readonly googlePlaceIdOf: (spotId: string) => Promise<SpotPlaceId>;
 };
@@ -195,6 +197,19 @@ export const createDestinationsRepository = (
           order: { popularity: 'DESC' },
         })
       ).map(toSpot),
+
+    spotsByIds: async (spotIds) => {
+      const ids = spotIds.filter((id) => z.uuid().safeParse(id).success);
+
+      return ids.length === 0
+        ? []
+        : (
+            await spots.findBy({
+              id: In(ids),
+              status: SPOT_STATUS.published,
+            })
+          ).map(toSpot);
+    },
 
     findSpot: async (spotId) => {
       const row = await spots.findOneBy({

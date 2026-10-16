@@ -23,6 +23,7 @@ import { createFlightsService } from './services/flights.service.ts';
 import { createDestinationsService } from './services/destinations.service.ts';
 import { createGeoService } from './services/geo.service.ts';
 import { createHotelsService } from './services/hotels.service.ts';
+import { createPlansService } from './services/plans.service.ts';
 import { createProfileService } from './services/profile.service.ts';
 import { createTripsService } from './services/trips.service.ts';
 
@@ -72,6 +73,8 @@ const cached = createCached({
   logger,
 });
 
+const tripsRepository = createTripsRepository(dataSource);
+const destinationsRepository = createDestinationsRepository(dataSource);
 const geo = createGeoService({ source: createLiteApiGeo(liteApiDeps), cached });
 
 if (env.GOOGLE_PLACES_API_KEY === undefined) {
@@ -85,7 +88,7 @@ const app = createApp({
     }),
     geo,
     destinations: createDestinationsService({
-      destinations: createDestinationsRepository(dataSource),
+      destinations: destinationsRepository,
       geo,
       places:
         env.GOOGLE_PLACES_API_KEY === undefined
@@ -107,9 +110,10 @@ const app = createApp({
       cached,
       logger,
     }),
-    trips: createTripsService({
-      trips: createTripsRepository(dataSource),
-      now,
+    trips: createTripsService({ trips: tripsRepository, now }),
+    plans: createPlansService({
+      trips: tripsRepository,
+      destinations: destinationsRepository,
     }),
   },
   requireUser: requireUser({ supabaseUrl: env.SUPABASE_URL, logger }),

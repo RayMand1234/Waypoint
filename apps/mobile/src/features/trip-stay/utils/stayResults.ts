@@ -2,6 +2,7 @@ import type {
   HotelOffer,
   HotelSearchResponse,
 } from '@waypoint/contracts/hotels';
+import type { SearchStatus } from '@/shared/utils/searchStatus';
 import type { StayHighlights } from './stayCardModel';
 
 export type StayResultsState =
@@ -16,20 +17,13 @@ export type StayResultsState =
       readonly hasMissingSources: boolean;
     };
 
-/** What the search query is, for the stays list. */
-export type StaySearchStatus =
-  | { readonly status: 'no-nights' }
-  | { readonly status: 'pending' }
-  | { readonly status: 'error'; readonly message: string }
-  | { readonly status: 'success'; readonly response: HotelSearchResponse };
-
 export const stayResultsState = (
-  search: StaySearchStatus,
+  search: SearchStatus<HotelSearchResponse>,
   ordered: readonly HotelOffer[],
   highlights: StayHighlights,
 ): StayResultsState => {
   switch (search.status) {
-    case 'no-nights':
+    case 'no-request':
       return { status: 'error', message: 'Set at least one night in step 3.' };
     case 'pending':
       return { status: 'loading' };

@@ -1,10 +1,19 @@
 export {
+  stopKindSchema,
+  travelModeSchema,
   tripDayInputSchema,
   tripDaySchema,
   tripStopInputSchema,
   tripStopSchema,
 } from './plan.ts';
-export type { TripDay, TripDayInput, TripStop, TripStopInput } from './plan.ts';
+export type {
+  StopKind,
+  TravelMode,
+  TripDay,
+  TripDayInput,
+  TripStop,
+  TripStopInput,
+} from './plan.ts';
 export { profileSchema } from './profile.ts';
 export type { Profile } from './profile.ts';
 export {
@@ -15,6 +24,8 @@ export {
   listTripsResponseSchema,
   patchSelectionBookedRequestSchema,
   patchSelectionBookedResponseSchema,
+  buildPlanRequestSchema,
+  buildPlanResponseSchema,
   putPlanRequestSchema,
   putPlanResponseSchema,
   putSelectionRequestSchema,
@@ -36,6 +47,8 @@ export type {
   ListTripsResponse,
   PatchSelectionBookedRequest,
   PatchSelectionBookedResponse,
+  BuildPlanRequest,
+  BuildPlanResponse,
   PutPlanRequest,
   PutPlanResponse,
   PutSelectionRequest,

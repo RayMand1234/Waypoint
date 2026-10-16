@@ -1,4 +1,5 @@
 import { Info, MapPin } from 'lucide-react-native';
+import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Badge, type BadgeProps } from '../Badge';
@@ -16,6 +17,8 @@ export type OfferCardProps = {
   readonly meta: string;
   /** Where it is, with a pin: "≈ 12 min to your spots". */
   readonly note?: string;
+  /** A few more lines under the title, e.g. a flight's way out and back. */
+  readonly details?: ReactNode;
   /** Formatted, including all fees: "€ 189". */
   readonly price: string;
   /** "per person", "per night", "whole trip". */
@@ -35,6 +38,7 @@ export const OfferCard = ({
   title,
   meta,
   note,
+  details,
   price,
   unit,
   delta,
@@ -70,6 +74,7 @@ export const OfferCard = ({
             {meta}
           </Text>
         </View>
+        {details}
         {note !== undefined && (
           <View style={styles.note}>
             <MapPin

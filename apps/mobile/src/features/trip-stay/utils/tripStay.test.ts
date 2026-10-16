@@ -1,13 +1,13 @@
 import { isoDateSchema, isoDateTimeSchema } from '@waypoint/contracts/common';
 import { hotelOfferSchema, type HotelOffer } from '@waypoint/contracts/hotels';
 import { spotSchema, type Spot } from '@waypoint/contracts/destinations';
-import { tripDetailSchema } from '@waypoint/contracts/trips';
 import { formatMoney } from '@/shared/utils/format';
 import { stayCard, stayHighlights, stayPhotos } from './stayCardModel';
 import { stayResultsState } from './stayResults';
 import { orderStays } from './stayOrder';
 import { pickedStops, stayRequest } from './stayRequest';
-import { chosenHotelId, staySelection, withSelection } from './staySelection';
+import { selectionOf } from '@/features/trip-flow';
+import { chosenHotelId } from './staySelection';
 
 const offer = (
   id: string,
@@ -181,7 +181,7 @@ describe('stayCard', () => {
 describe('staySelection', () => {
   it('snapshots the offer with its lowest source, and reads the chosen hotel back', () => {
     const chosen = offer('casa', 38_400);
-    const selection = staySelection(chosen);
+    const selection = selectionOf(chosen);
 
     expect(selection).toMatchObject({
       provider: 'liteapi',
@@ -213,7 +213,7 @@ describe('stayResultsState', () => {
 
   it('says why there is nothing to show, or what to show', () => {
     expect(
-      stayResultsState({ status: 'no-nights' }, offers, highlights),
+      stayResultsState({ status: 'no-request' }, offers, highlights),
     ).toMatchObject({ status: 'error' });
     expect(stayResultsState({ status: 'pending' }, offers, highlights)).toEqual(
       { status: 'loading' },
@@ -243,38 +243,5 @@ describe('stayPhotos', () => {
       'https://img.example/main.jpg',
     ]);
     expect(stayPhotos(offer('q', 1_000), undefined)).toEqual([]);
-  });
-});
-
-describe('withSelection', () => {
-  it('replaces the selection of the same kind', () => {
-    const selection = {
-      kind: 'stay' as const,
-      offerSnapshot: {},
-      provider: 'liteapi' as const,
-      deepLink: 'https://book.example/new',
-      price: { amountMinor: 1, currency: 'EUR' as const },
-      checkedAt: isoDateTimeSchema.parse('2027-04-01T10:00:00.000Z'),
-      bookedAt: null,
-    };
-    const trip = tripDetailSchema.parse({
-      id: '00000000-0000-4000-8000-000000000001',
-      status: 'draft',
-      styles: [],
-      pace: 'balanced',
-      destinationId: null,
-      destinationName: null,
-      startDate: null,
-      endDate: null,
-      originAirport: null,
-      adults: 2,
-      childrenAges: [],
-      updatedAt: '2027-04-01T10:00:00.000Z',
-      spots: [],
-      days: [],
-      selections: [{ ...selection, deepLink: 'https://book.example/old' }],
-    });
-
-    expect(withSelection(trip, selection).selections).toEqual([selection]);
   });
 });

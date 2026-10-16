@@ -13,4 +13,7 @@ export class TripDayEntity {
 
   @Column('date')
   date!: string;
+
+  @Column('text', { nullable: true })
+  title!: string | null;
 }

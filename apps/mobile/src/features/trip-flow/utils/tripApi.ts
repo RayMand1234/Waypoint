@@ -1,8 +1,12 @@
 import {
   getTripResponseSchema,
+  putSelectionResponseSchema,
   updateTripResponseSchema,
+  type PutSelectionRequest,
+  type SelectionKind,
   type Trip,
   type TripDetail,
+  type TripSelection,
   type UpdateTripRequest,
 } from '@waypoint/contracts/trips';
 import { apiRequest } from '@/shared/utils/apiClient';
@@ -19,3 +23,15 @@ export const updateTrip = (
     method: 'PATCH',
     body: changes,
   });
+
+/** Saves the offer chosen for one part of the trip (its flight, its stay). */
+export const saveSelection = (
+  tripId: string,
+  kind: SelectionKind,
+  selection: PutSelectionRequest,
+): Promise<TripSelection> =>
+  apiRequest(
+    `/trips/${encodeURIComponent(tripId)}/selections/${kind}`,
+    putSelectionResponseSchema,
+    { method: 'PUT', body: selection },
+  );

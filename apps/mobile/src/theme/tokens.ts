@@ -178,6 +178,15 @@ export const componentSize = {
   /** Stay details sheet (Stay.dc.html): the big photo and its thumbnails. */
   'stay-photo-h': 196,
   'stay-thumb-h': 60,
+  /** Flight cards (Flights.dc.html): the "Out" / "Back" column. */
+  'flight-leg-label-w': 40,
+  /** Day plan timeline (Plan.dc.html). */
+  'plan-day-tab-h': 52,
+  'plan-time-w': 44,
+  'plan-dot': 16,
+  'plan-dot-border': 2,
+  'plan-rail': 2,
+  'plan-travel-h': 28,
   'brand-mark': 28,
   'progress-track-max': 180,
 } as const;

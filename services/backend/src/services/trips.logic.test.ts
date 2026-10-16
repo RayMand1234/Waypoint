@@ -152,8 +152,10 @@ describe('validatePlan', () => {
     tripDayInputSchema.parse({
       dayIndex,
       date,
+      title: null,
       stops: positions.map((position) => ({
         position,
+        kind: 'spot',
         spotId: `spot-${String(position)}`,
         name: 'Spot',
         lat: 38.7,
@@ -161,6 +163,7 @@ describe('validatePlan', () => {
         startsAt: '09:30',
         minutes: 60,
         travelMinutesFromPrevious: null,
+        travelMode: null,
         isFixed: false,
       })),
     });

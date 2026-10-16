@@ -30,6 +30,8 @@ export type TripCardModel = {
   readonly progress: number | null;
   readonly action: { readonly text: string; readonly isLink: boolean };
   readonly target: TripTarget;
+  /** Only a draft can be deleted from Home. */
+  readonly canDelete: boolean;
 };
 
 const CODE_LENGTH = 3;
@@ -111,4 +113,5 @@ export const toTripCard = (trip: TripListItem): TripCardModel => ({
       : trip.destinationName.slice(0, CODE_LENGTH).toUpperCase(),
   line: `${datesLine(trip)} · ${formatTravelers(travelerCount(trip))}`,
   ...statusParts(trip),
+  canDelete: trip.status === 'draft',
 });

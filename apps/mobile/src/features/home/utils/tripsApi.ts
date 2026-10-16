@@ -5,6 +5,7 @@ import {
   type Trip,
   type TripListItem,
 } from '@waypoint/contracts/trips';
+import { z } from 'zod';
 import { apiRequest } from '@/shared/utils/apiClient';
 
 export const fetchTrips = async (): Promise<readonly TripListItem[]> =>
@@ -16,3 +17,10 @@ export const createTrip = (input: Partial<CreateTripRequest>): Promise<Trip> =>
     method: 'POST',
     body: input,
   });
+
+/** Deletes a trip for good — its plan and picks with it. */
+export const deleteTrip = async (tripId: string): Promise<void> => {
+  await apiRequest(`/trips/${encodeURIComponent(tripId)}`, z.null(), {
+    method: 'DELETE',
+  });
+};

@@ -1,5 +1,6 @@
 import type { HotelDetail, HotelOffer } from '@waypoint/contracts/hotels';
 import type { BadgeProps, OfferDelta } from '@/shared/components';
+import { offerDelta } from '@/shared/utils/offerDelta';
 import { formatMoney } from '@/shared/utils/format';
 import { plural } from '@/shared/utils/text';
 import { qualityOf } from './stayOrder';
@@ -33,14 +34,6 @@ export const CANCELLATION_TEXT: Readonly<
   refundable: 'Free cancellation',
   'non-refundable': 'Non-refundable',
   unknown: 'See the booking site',
-};
-
-/** Where the prices come from, by provider. */
-export const SITE_NAMES: Readonly<
-  Record<HotelOffer['sources'][number]['provider'], string>
-> = {
-  liteapi: 'Booking partner',
-  google: 'Google',
 };
 
 /** The id of the first offer with the lowest `by`. */
@@ -87,34 +80,6 @@ const noteOf = (offer: HotelOffer): string | null => {
     : `${(offer.distanceMeters / METERS_PER_KM).toFixed(KM_DECIMALS)} km from the centre`;
 };
 
-const money = (offer: HotelOffer, amountMinor: number): string =>
-  formatMoney({ amountMinor, currency: offer.bestPrice.currency });
-
-/** The best-value stay against the average; every other one against the best value. */
-const deltaOf = (
-  offer: HotelOffer,
-  best: HotelOffer | undefined,
-): OfferDelta | undefined => {
-  if (offer.value.isBestValue) {
-    const savings = offer.value.savingsVsAverage.amountMinor;
-
-    return savings > 0
-      ? { text: `−${money(offer, savings)} vs avg`, direction: 'down' }
-      : undefined;
-  }
-
-  const diff =
-    best === undefined
-      ? 0
-      : offer.bestPrice.amountMinor - best.bestPrice.amountMinor;
-
-  if (diff === 0) return undefined;
-
-  return diff < 0
-    ? { text: `−${money(offer, -diff)} vs best value`, direction: 'down' }
-    : { text: `+${money(offer, diff)} vs best value`, direction: 'up' };
-};
-
 const badgesOf = (
   offer: HotelOffer,
   highlights: StayHighlights,
@@ -143,7 +108,7 @@ export const stayCard = (
   note: noteOf(offer),
   price: formatMoney(offer.bestPrice),
   unit: `${plural(offer.nights, 'night')} · ${formatMoney(offer.pricePerNight)} / night`,
-  delta: deltaOf(offer, highlights.bestValue),
+  delta: offerDelta(offer, highlights.bestValue),
   badges: badgesOf(offer, highlights),
   isBestValue: offer.value.isBestValue,
 });

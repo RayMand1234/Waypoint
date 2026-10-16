@@ -53,3 +53,53 @@ export const formatParty = (
       ? []
       : [plural(childrenAges.length, 'child', 'children')]),
   ].join(' · ');
+
+const MINUTES_PER_HOUR = 60;
+
+/** `45m`, `2h`, `1h 30m`. */
+export const formatDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / MINUTES_PER_HOUR);
+  const rest = minutes % MINUTES_PER_HOUR;
+
+  if (hours === 0) return `${String(rest)}m`;
+
+  return rest === 0
+    ? `${String(hours)}h`
+    : `${String(hours)}h ${String(rest)}m`;
+};
+
+const WEEKDAYS_SHORT = [
+  'Sun',
+  'Mon',
+  'Tue',
+  'Wed',
+  'Thu',
+  'Fri',
+  'Sat',
+] as const;
+
+/** `Sun 15`, or `Sun 15 Nov` with the month — from the date part of a local date-time or date. */
+export const formatDay = (
+  localDate: string,
+  { withMonth = false }: { readonly withMonth?: boolean } = {},
+): string => {
+  const { day, month } = dayMonth(localDate);
+  const weekday =
+    WEEKDAYS_SHORT[
+      new Date(
+        Date.UTC(
+          Number(localDate.slice(0, 4)),
+          Number(localDate.slice(5, 7)) - 1,
+          day,
+        ),
+      ).getUTCDay()
+    ] ?? '';
+
+  return withMonth
+    ? `${weekday} ${String(day)} ${month}`
+    : `${weekday} ${String(day)}`;
+};
+
+/** `08:10` — the time part of a local date-time. */
+export const formatClock = (localDateTime: string): string =>
+  localDateTime.slice(11, 16);

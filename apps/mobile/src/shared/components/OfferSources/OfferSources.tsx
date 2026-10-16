@@ -1,13 +1,24 @@
-import type { HotelOffer } from '@waypoint/contracts/hotels';
+import type { OfferSource } from '@waypoint/contracts/common';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { Text } from '@/shared/components';
-import { plural } from '@/shared/utils/text';
-import { StaySourceRow } from './StaySourceRow';
+import { Text } from '../Text';
+import { OfferSourceRow } from './OfferSourceRow';
 
-/** "Where we found it": each site's price for the whole stay, lowest first. */
-export const StaySources = ({ offer }: { readonly offer: HotelOffer }) => {
-  const sources = [...offer.sources].sort(
+type OfferSourcesProps = {
+  readonly sources: readonly OfferSource[];
+  /** What the prices cover: "4 nights, all fees", "2 travelers, round trip". */
+  readonly caption: string;
+  /** How Waypoint compares, for this kind of offer. */
+  readonly footnote: string;
+};
+
+/** "Where we found it": each site's full price for the same offer, lowest first. */
+export const OfferSources = ({
+  sources,
+  caption,
+  footnote,
+}: OfferSourcesProps) => {
+  const sorted = [...sources].sort(
     (a, b) => a.price.amountMinor - b.price.amountMinor,
   );
 
@@ -16,22 +27,21 @@ export const StaySources = ({ offer }: { readonly offer: HotelOffer }) => {
       <View style={styles.header}>
         <Text variant="subtitle">Where we found it</Text>
         <Text variant="caption" color="ink-muted">
-          {`${plural(offer.nights, 'night')}, all fees`}
+          {caption}
         </Text>
       </View>
       <View style={styles.list}>
-        {sources.map((source, index) => (
-          <StaySourceRow
+        {sorted.map((source, index) => (
+          <OfferSourceRow
             key={`${source.provider}-${source.providerOfferId}`}
             source={source}
             isLowest={index === 0}
-            isOnlyOne={sources.length === 1}
+            isOnlyOne={sorted.length === 1}
           />
         ))}
       </View>
       <Text variant="caption" color="ink-muted">
-        Waypoint compares booking sites and shows you the lowest full price for
-        the same room. You book on the site itself.
+        {footnote}
       </Text>
     </View>
   );

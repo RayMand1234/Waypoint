@@ -110,11 +110,13 @@ const toDay = (day: TripDayEntity, stops: readonly TripStopEntity[]): TripDay =>
     id: day.id,
     dayIndex: day.dayIndex,
     date: day.date,
+    title: day.title,
     stops: stops
       .toSorted((a, b) => a.position - b.position)
       .map((stop) => ({
         id: stop.id,
         position: stop.position,
+        kind: stop.kind,
         spotId: stop.spotId,
         name: stop.name,
         lat: stop.lat,
@@ -122,6 +124,7 @@ const toDay = (day: TripDayEntity, stops: readonly TripStopEntity[]): TripDay =>
         startsAt: stop.startsAt.slice(0, 5),
         minutes: stop.minutes,
         travelMinutesFromPrevious: stop.travelMinutesFromPrevious,
+        travelMode: stop.travelMode,
         isFixed: stop.isFixed,
       })),
   });
@@ -359,6 +362,7 @@ export const createTripsRepository = (
             tripId,
             dayIndex: day.dayIndex,
             date: day.date,
+            title: day.title,
           }),
         );
 

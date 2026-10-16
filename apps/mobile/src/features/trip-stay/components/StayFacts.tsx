@@ -2,7 +2,7 @@ import type { HotelDetail, HotelOffer } from '@waypoint/contracts/hotels';
 import { MapPin, Star } from 'lucide-react-native';
 import { View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
-import { Text } from '@/shared/components';
+import { DetailRows, Text } from '@/shared/components';
 import {
   CANCELLATION_TEXT,
   ratingWords,
@@ -65,20 +65,7 @@ export const StayFacts = ({
           </View>
         )}
       </View>
-      <View style={styles.rows}>
-        {rows.map(([term, value]) => (
-          <View key={term} style={styles.row}>
-            <Text variant="body-sm" color="ink-muted">
-              {term}
-            </Text>
-            <View style={styles.value}>
-              <Text variant="label" align="right">
-                {value}
-              </Text>
-            </View>
-          </View>
-        ))}
-      </View>
+      <DetailRows rows={rows} />
       {detail !== undefined && detail.facilities.length > 0 && (
         <View style={styles.facilities}>
           {detail.facilities.slice(0, MAX_FACILITIES).map((facility) => (
@@ -103,17 +90,6 @@ const styles = StyleSheet.create((theme) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.space[2],
-  },
-  rows: {
-    gap: theme.space[3],
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.space[3],
-  },
-  value: {
-    flexShrink: 1,
   },
   facilities: {
     flexDirection: 'row',

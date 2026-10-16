@@ -1,12 +1,20 @@
-import type { OfferSource } from '@waypoint/contracts/common';
+import type { OfferSource, ProviderId } from '@waypoint/contracts/common';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { Badge, Text } from '@/shared/components';
-import { formatMoney } from '@/shared/utils/format';
-import { SITE_NAMES } from '../utils/stayCardModel';
+import { formatMoney } from '../../utils/format';
+import { Badge } from '../Badge';
+import { Text } from '../Text';
 
-/** One site's price for the whole stay; the lowest is tinted (and badged when there are others). */
-export const StaySourceRow = ({
+/** Where the prices come from, by provider. */
+const SITE_NAMES: Readonly<Record<ProviderId, string>> = {
+  liteapi: 'Booking partner',
+  google: 'Google',
+};
+
+export const siteName = (provider: ProviderId): string => SITE_NAMES[provider];
+
+/** One site's price; the lowest is tinted (and badged when there are others). */
+export const OfferSourceRow = ({
   source,
   isLowest,
   isOnlyOne,
@@ -20,7 +28,7 @@ export const StaySourceRow = ({
   return (
     <View style={styles.row}>
       <View style={styles.site}>
-        <Text variant="label">{SITE_NAMES[source.provider]}</Text>
+        <Text variant="label">{siteName(source.provider)}</Text>
       </View>
       {isLowest && !isOnlyOne && <Badge kind="savings" label="Lowest" />}
       <Text variant="body-strong" tabular>

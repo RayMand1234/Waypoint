@@ -1,20 +1,9 @@
 import type { Spot } from '@waypoint/contracts/destinations';
 import { STYLE_SHORT_NAMES } from '@/features/trip-flow';
+import { formatDuration } from '@/shared/utils/format';
 
 const TOP_PICKS = 3;
 const STYLES_IN_META = 2;
-
-/** "45m", "2h", "1h 30m". */
-export const formatMinutes = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-
-  if (hours === 0) return `${String(rest)}m`;
-
-  return rest === 0
-    ? `${String(hours)}h`
-    : `${String(hours)}h ${String(rest)}m`;
-};
 
 /** "Views · Culture · 2h". */
 export const spotMeta = (spot: Pick<Spot, 'styles' | 'visitMinutes'>): string =>
@@ -22,7 +11,7 @@ export const spotMeta = (spot: Pick<Spot, 'styles' | 'visitMinutes'>): string =>
     ...spot.styles
       .slice(0, STYLES_IN_META)
       .map((style) => STYLE_SHORT_NAMES[style]),
-    formatMinutes(spot.visitMinutes),
+    formatDuration(spot.visitMinutes),
   ].join(' · ');
 
 /** The ids of the most popular spots, badged "Top pick". */

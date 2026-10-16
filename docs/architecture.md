@@ -4,7 +4,7 @@ Status: **draft v2**, October 2026 — one backend service (`services/backend`),
 
 ## 1. Overview
 
-Waypoint plans a whole trip in under five minutes: trip style → destination → spots & dates → day-by-day plan → flights → stay → summary, always steering to the best quality for the money.
+Waypoint plans a whole trip in under five minutes: trip style → destination → spots & dates → stay → flights → day-by-day plan → summary, always steering to the best quality for the money.
 
 In years 1–2 Waypoint **plans and compares only**. It never takes payment; each part is booked on the partner site through a deep link, and Waypoint earns through affiliate programs.
 
@@ -84,7 +84,8 @@ Everything except `/health` needs `Authorization: Bearer <Supabase access token>
 | flights | `POST /flights/search` | live fares (one way / round trip) → ranked `FlightOffer[]` + `errors` |
 | trips | `GET /trips` · `POST /trips` | my trips (each with `planDays` and chosen `selections`, so Home can show progress and resume a draft) · create a draft |
 | | `GET /trips/:id` · `PATCH /trips/:id` · `DELETE /trips/:id` | detail (spots, days, selections) · update picks/status · delete |
-| | `PUT /trips/:id/plan` | replace the day-by-day plan |
+| | `POST /trips/:id/plan` | build the day plan and save it (or, given each day's spots, re-order and re-time them) |
+| | `PUT /trips/:id/plan` | replace the day-by-day plan as given |
 | | `PUT /trips/:id/selections/:kind` | choose a flight / stay / ticket (offer snapshot) |
 | | `PATCH /trips/:id/selections/:kind/booked` | tick / untick "booked on the partner site" |
 
@@ -108,16 +109,16 @@ Each step saves the traveler's picks. The **route moment** between steps (the ~3
 | 1 | Trip style | `POST /trips` (draft) · `PATCH /trips/:id` | `GET /countries`, `GET /places?q=` |
 | 2 | Destination | `PATCH /trips/:id` · `GET /countries/:cc/cities/:city/prices` | `GET /places/:placeId` |
 | 3 | Spots & dates | `PATCH /trips/:id` (spots, dates) | — |
-| 4 | Stay | `POST /hotels/search` (`stops`: the picked spots) · `GET /hotels/:hotelId` · `PUT /trips/:id/selections/stay` | `GET /airports?q=` · `POST /flights/search` |
-| 5 | Flights | `PUT /trips/:id/selections/flight` | — |
-| 6 | Day plan | `PUT /trips/:id/plan` | — |
+| 4 | Stay | `POST /hotels/search` (`stops`: the picked spots) · `GET /hotels/:hotelId` · `PUT /trips/:id/selections/stay` | `POST /flights/search` (round trip, the whole party) |
+| 5 | Flights | `POST /flights/search` · `PUT /trips/:id/selections/flight` | — |
+| 6 | Day plan | `POST /trips/:id/plan` (built during the moment before it; edits send each day's spots) | — |
 | 7 | Summary → Trip planned | `PATCH /trips/:id` (`planned`) · `GET /trips/:id` · deep links · `PATCH …/booked` per row | — |
 
 The stay comes right after the spots so it can sit among them, and the day plan comes last: it starts each day from the stay, and flight times shorten the first and last days.
 
 A stay search by `stops` looks around the spots' geometric median (wide enough for 80% of them, 1–5 km) and scales each hotel's quality by how near it is to them against the other hotels found (`services/hotelLocation.logic.ts`; travel minutes are estimated in `lib/travel.ts`, which the day planner will share). Each offer carries `stopsMinutes` (the median, so one far spot doesn't count against a central hotel) and one has `isBestLocation`.
 
-Day-plan generation (spots, travel times, LLM text) has no data source yet; until it does, the app builds the plan and the backend stores it.
+The day plan is built on the server by a deterministic planner (`services/planner/`): each day's room (09:30–21:00, the pace's budget, shortened by landing and leaving, with landing, check-in, the airport run and the flight home as fixed stops); regret insertion to group the spots into days (hardest to place first, opening hours and budget respected), a swap-in of more popular spots that were dropped, then moves and 2-opt reversals while they cut travel and even out the days; each day is timed with a lunch break, waits for opening, and walk or transit between stops (`lib/travel.ts`). Spots that don't fit are the trip's spots not in the plan. An edit (a spot removed or moved) sends each day's spots and the planner only re-orders and re-times them.
 
 ## 5. Data model
 
@@ -333,4 +334,4 @@ Apply to Booking.com, Agoda, Expedia, the Aviasales Search API and Kiwi.com **no
 6. **liteAPI fair use:** confirm that search-heavy, booking-light usage is within their terms before launch.
 7. **Gateway:** stay with direct app → service calls, or put one gateway in front when the service count or auth needs grow.
 8. **Flight deep links:** liteAPI documents white-label deep links for hotels only; confirm the flights page format with Nuitée.
-9. **Spots and day-plan generation:** no source yet (OpenTripMap / Foursquare / LLM) — the backend only stores the plan the app sends.
+9. **Day-plan text:** the plan is deterministic; descriptions written by an LLM (a "why this day" line) are not in yet.

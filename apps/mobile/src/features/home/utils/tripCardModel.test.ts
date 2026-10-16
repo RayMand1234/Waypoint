@@ -70,6 +70,11 @@ describe('toTripCard', () => {
     });
   });
 
+  it('lets only a draft be deleted', () => {
+    expect(toTripCard(trip()).canDelete).toBe(true);
+    expect(toTripCard(trip({ status: 'past' })).canDelete).toBe(false);
+  });
+
   it('offers to plan a past trip again', () => {
     expect(toTripCard(trip({ status: 'past' }))).toMatchObject({
       tone: 'past',

@@ -1,4 +1,4 @@
-import { assertNever, err, ok, type Result } from '@waypoint/contracts/common';
+import { err, ok, type Result } from '@waypoint/contracts/common';
 import {
   offerSnapshotSchemas,
   type CreateTripRequest,
@@ -12,10 +12,10 @@ import {
   type TripSelection,
   type UpdateTripRequest,
 } from '@waypoint/contracts/trips';
-import type { TripLookupError } from '../domain/trip.ts';
 import type { UserId } from '../domain/userId.ts';
 import type { TripsRepository } from '../repositories/trips.repository.ts';
-import { invalidRequest, notFound, type ServiceError } from './errors.ts';
+import { invalidRequest, type ServiceError } from './errors.ts';
+import { mapTripError, TRIP_NOT_FOUND } from './tripErrors.ts';
 import {
   planTripUpdate,
   statusAfterBooking,
@@ -54,37 +54,6 @@ export type TripsService = {
   ) => Outcome<TripSelection>;
 };
 
-// Another user's trip is "not found", never "forbidden": its existence is not ours to confirm.
-const TRIP_NOT_FOUND = notFound('We have no trip with that id.');
-const SELECTION_NOT_FOUND = notFound(
-  'This trip has no selection of that kind yet.',
-);
-
-/** A repository lookup failure, or an error a trip rule already returned. */
-const toServiceError = (
-  error: TripLookupError | ServiceError,
-): ServiceError => {
-  switch (error.type) {
-    case 'trip-not-found':
-      return TRIP_NOT_FOUND;
-    case 'selection-not-found':
-      return SELECTION_NOT_FOUND;
-    case 'not-found':
-    case 'invalid-request':
-    case 'conflict':
-    case 'upstream-timeout':
-    case 'upstream-unavailable':
-      return error;
-    default:
-      return assertNever(error);
-  }
-};
-
-const mapError = <T>(
-  result: Result<T, TripLookupError | ServiceError>,
-): Result<T, ServiceError> =>
-  result.ok ? result : err(toServiceError(result.error));
-
 export const createTripsService = ({
   trips,
   now,
@@ -114,7 +83,7 @@ export const createTripsService = ({
     ok(withEffectiveStatus(await trips.create(userId, input), now())),
 
   update: async (userId, tripId, patch) => {
-    const updated = mapError(
+    const updated = mapTripError(
       await trips.update(
         userId,
         tripId,
@@ -130,7 +99,7 @@ export const createTripsService = ({
     (await trips.remove(userId, tripId)) ? ok(null) : err(TRIP_NOT_FOUND),
 
   putPlan: async (userId, tripId, days) => {
-    const saved = mapError(
+    const saved = mapTripError(
       await trips.replacePlan(userId, tripId, days, (trip) =>
         validatePlan(trip, days),
       ),
@@ -144,7 +113,7 @@ export const createTripsService = ({
     if (!offerSnapshotSchemas[kind].safeParse(input.offerSnapshot).success)
       return err(invalidRequest(`offerSnapshot is not a ${kind} offer.`));
 
-    return mapError(
+    return mapTripError(
       await trips.upsertSelection(userId, tripId, {
         ...input,
         kind,
@@ -154,7 +123,7 @@ export const createTripsService = ({
   },
 
   setBooked: async (userId, tripId, kind, booked) =>
-    mapError(
+    mapTripError(
       await trips.setSelectionBooked(
         userId,
         tripId,

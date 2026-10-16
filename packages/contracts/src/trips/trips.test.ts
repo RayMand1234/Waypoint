@@ -12,6 +12,7 @@ import { offerSnapshotSchemas } from './selection.ts';
 
 const sampleStop = {
   position: 0,
+  kind: 'spot',
   spotId: 'lisbon-alfama',
   name: 'Alfama',
   lat: 38.7118,
@@ -19,6 +20,7 @@ const sampleStop = {
   startsAt: '09:30',
   minutes: 90,
   travelMinutesFromPrevious: null,
+  travelMode: null,
   isFixed: false,
 };
 
@@ -66,10 +68,26 @@ describe('updateTripRequest', () => {
   });
 });
 
+describe('plan stops', () => {
+  it('needs a spot stop to say which spot and where; fixed moments may have no place', () => {
+    const day = (stop: Record<string, unknown>) =>
+      putPlanRequestSchema.safeParse({
+        days: [{ dayIndex: 0, date: '2026-05-12', title: null, stops: [stop] }],
+      }).success;
+
+    expect(day({ ...sampleStop, lat: null })).toBe(false);
+    expect(
+      day({ ...sampleStop, kind: 'lunch', spotId: null, lat: null, lng: null }),
+    ).toBe(true);
+  });
+});
+
 describe('putPlanRequest', () => {
   it('takes days of stops with no server-assigned ids', () => {
     const parsed = putPlanRequestSchema.parse({
-      days: [{ dayIndex: 0, date: '2026-05-12', stops: [sampleStop] }],
+      days: [
+        { dayIndex: 0, date: '2026-05-12', title: null, stops: [sampleStop] },
+      ],
     });
 
     expect(parsed.days[0]?.stops[0]?.name).toBe('Alfama');
@@ -86,6 +104,7 @@ describe('putPlanRequest', () => {
           {
             dayIndex: 0,
             date: '2026-05-12',
+            title: null,
             stops: [
               { ...sampleStop, id: '00000000-0000-4000-8000-000000000000' },
             ],
@@ -102,6 +121,7 @@ describe('putPlanRequest', () => {
           {
             dayIndex: 0,
             date: '2026-05-12',
+            title: null,
             stops: [{ ...sampleStop, lat: 120 }],
           },
         ],

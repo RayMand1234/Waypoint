@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native-unistyles';
 import { useMe } from '@/features/profile';
 import { useSession } from '@/shared/auth';
 import { Screen, Text } from '@/shared/components';
+import { useDeleteTrip } from '../hooks/useDeleteTrip';
 import { useGreeting } from '../hooks/useGreeting';
 import { useOpenTrip } from '../hooks/useOpenTrip';
 import { useStartPlanning } from '../hooks/useStartPlanning';
@@ -19,6 +20,7 @@ export const HomeScreen = () => {
   const me = useMe();
   const session = useSession();
   const trips = useTrips();
+  const deleting = useDeleteTrip();
   const planning = useStartPlanning();
   const openTrip = useOpenTrip(planning.planAgain);
   const name = me.data?.name ?? null;
@@ -51,11 +53,23 @@ export const HomeScreen = () => {
             </Text>
           )}
         </View>
-        <TripsSection
-          trips={trips}
-          onRetry={() => void trips.refetch()}
-          onOpen={openTrip}
-        />
+        <View style={styles.create}>
+          <TripsSection
+            trips={trips}
+            onRetry={() => void trips.refetch()}
+            onOpen={openTrip}
+            onDelete={deleting.askToDelete}
+          />
+          {deleting.error !== undefined && (
+            <Text
+              variant="caption"
+              color="danger"
+              accessibilityLiveRegion="polite"
+            >
+              {`We couldn't delete that draft. ${deleting.error}`}
+            </Text>
+          )}
+        </View>
       </View>
     </Screen>
   );

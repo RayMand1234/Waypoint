@@ -1,12 +1,15 @@
 import type { HotelSearchRequest } from '@waypoint/contracts/hotels';
 import type { TripDetail } from '@waypoint/contracts/trips';
 import { useMemo } from 'react';
-import { useStepNavigation } from '@/features/trip-flow';
+import {
+  selectionOf,
+  useSaveSelection,
+  useStepNavigation,
+} from '@/features/trip-flow';
 import { errorMessage } from '@/shared/utils/errorMessage';
 import { stayHighlights } from '../utils/stayCardModel';
 import { stayResultsState } from '../utils/stayResults';
-import { chosenHotelId, staySelection } from '../utils/staySelection';
-import { useSaveStay } from './useSaveStay';
+import { chosenHotelId } from '../utils/staySelection';
 import { useStayDetails } from './useStayDetails';
 import { useStayPick } from './useStayPick';
 import { useStaySearch } from './useStaySearch';
@@ -19,14 +22,14 @@ export const useStayStep = (
   const search = useStaySearch(request);
   const pick = useStayPick(search.offers, chosenHotelId(trip));
   const details = useStayDetails(search.offers);
-  const save = useSaveStay(trip.id);
+  const save = useSaveSelection(trip.id, 'stay');
   const navigation = useStepNavigation(trip.id);
   const highlights = useMemo(
     () => stayHighlights(search.offers),
     [search.offers],
   );
   const selection =
-    pick.picked === undefined ? undefined : staySelection(pick.picked);
+    pick.picked === undefined ? undefined : selectionOf(pick.picked);
 
   return {
     results: stayResultsState(search.status, pick.ordered, highlights),

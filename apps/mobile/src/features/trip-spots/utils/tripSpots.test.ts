@@ -3,7 +3,8 @@ import { spotSchema, type Spot } from '@waypoint/contracts/destinations';
 import { addDays, todayOf } from '@/shared/utils/dates';
 import { dayState, monthGrid, pickDay, shiftMonth } from './calendar';
 import { fitLabel, suggestedSpotIds } from './spotFit';
-import { formatMinutes, spotMeta, toggleId, topPickIds } from './spotRowModel';
+import { formatDuration } from '@/shared/utils/format';
+import { spotMeta, toggleId, topPickIds } from './spotRowModel';
 
 const date = (text: string) => isoDateSchema.parse(text);
 
@@ -123,9 +124,9 @@ describe('spot fit', () => {
 
 describe('spot rows', () => {
   it('words duration and meta', () => {
-    expect(formatMinutes(45)).toBe('45m');
-    expect(formatMinutes(120)).toBe('2h');
-    expect(formatMinutes(90)).toBe('1h 30m');
+    expect(formatDuration(45)).toBe('45m');
+    expect(formatDuration(120)).toBe('2h');
+    expect(formatDuration(90)).toBe('1h 30m');
     expect(spotMeta(spot('1', 90))).toBe('Culture · Views · 1h 30m');
   });
 

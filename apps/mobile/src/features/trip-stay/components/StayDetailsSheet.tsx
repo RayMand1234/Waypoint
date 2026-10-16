@@ -1,12 +1,12 @@
 import type { HotelDetail, HotelOffer } from '@waypoint/contracts/hotels';
 import { Linking, ScrollView, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { Button, Sheet } from '@/shared/components';
+import { lowestSource } from '@/features/trip-flow';
+import { Button, OfferSources, Sheet } from '@/shared/components';
+import { plural } from '@/shared/utils/text';
 import type { StayCardModel } from '../utils/stayCardModel';
-import { lowestSource } from '../utils/staySelection';
 import { StayFacts } from './StayFacts';
 import { StayPhotos } from './StayPhotos';
-import { StaySources } from './StaySources';
 
 type StayDetailsSheetProps = {
   readonly offer: HotelOffer;
@@ -29,7 +29,7 @@ export const StayDetailsSheet = ({
   onPick,
   onClose,
 }: StayDetailsSheetProps) => {
-  const source = lowestSource(offer);
+  const source = lowestSource(offer.sources);
 
   return (
     <Sheet
@@ -67,7 +67,11 @@ export const StayDetailsSheet = ({
           urls={photos}
         />
         <StayFacts offer={offer} card={card} detail={detail} />
-        <StaySources offer={offer} />
+        <OfferSources
+          sources={offer.sources}
+          caption={`${plural(offer.nights, 'night')}, all fees`}
+          footnote="Waypoint compares booking sites and shows you the lowest full price for the same room. You book on the site itself."
+        />
       </ScrollView>
     </Sheet>
   );

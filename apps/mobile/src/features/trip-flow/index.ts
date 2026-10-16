@@ -4,6 +4,7 @@ export { StepLayout } from './components/StepLayout';
 export { StepPlaceholderScreen } from './components/StepPlaceholderScreen';
 export { StepStatus } from './components/StepStatus';
 export { useStepNavigation } from './hooks/useStepNavigation';
+export { useSaveSelection } from './hooks/useSaveSelection';
 export { useTrip } from './hooks/useTrip';
 export { NO_TRIP_MESSAGE, useTripParams } from './hooks/useTripParams';
 export { useUpdateTrip } from './hooks/useUpdateTrip';
@@ -17,3 +18,9 @@ export {
   stepNumber,
 } from './utils/steps';
 export type { StepKey } from './utils/steps';
+export {
+  lowestSource,
+  savedOffer,
+  selectionOf,
+  withSelection,
+} from './utils/selections';

@@ -15,14 +15,22 @@ const TRANSIT_WAIT_MINUTES = 10;
 const minutesAt = (kmh: number, meters: number): number =>
   (meters / 1000 / kmh) * 60;
 
-/** Estimated minutes from `a` to `b`: walking, or transit when that's quicker (past ~1 km). */
-export const travelMinutes = (a: LatLng, b: LatLng): number => {
-  const meters = distanceMeters(a, b) * DETOUR;
-
-  return Math.round(
-    Math.min(
-      minutesAt(WALK_KMH, meters),
-      TRANSIT_WAIT_MINUTES + minutesAt(TRANSIT_KMH, meters),
-    ),
-  );
+export type TravelLeg = {
+  readonly minutes: number;
+  readonly mode: 'walk' | 'transit';
 };
+
+/** How to get from `a` to `b`: walking, or transit when that's quicker (past ~1 km). */
+export const travelLeg = (a: LatLng, b: LatLng): TravelLeg => {
+  const meters = distanceMeters(a, b) * DETOUR;
+  const walk = minutesAt(WALK_KMH, meters);
+  const transit = TRANSIT_WAIT_MINUTES + minutesAt(TRANSIT_KMH, meters);
+
+  return walk <= transit
+    ? { minutes: Math.round(walk), mode: 'walk' }
+    : { minutes: Math.round(transit), mode: 'transit' };
+};
+
+/** Estimated minutes from `a` to `b`. */
+export const travelMinutes = (a: LatLng, b: LatLng): number =>
+  travelLeg(a, b).minutes;

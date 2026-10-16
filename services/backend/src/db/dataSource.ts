@@ -5,6 +5,7 @@ import { Init1760550000000 } from './migrations/1760550000000-Init.ts';
 import { TravelersAndCurrency1760640000000 } from './migrations/1760640000000-TravelersAndCurrency.ts';
 import { DestinationsAndSpots1760700000000 } from './migrations/1760700000000-DestinationsAndSpots.ts';
 import { SearchedDestinations1760800000000 } from './migrations/1760800000000-SearchedDestinations.ts';
+import { PlanStops1761000000000 } from './migrations/1761000000000-PlanStops.ts';
 import { createTypeOrmLogger } from './typeormLogger.ts';
 
 const SLOW_QUERY_MS = 500;
@@ -33,6 +34,7 @@ export const createDataSource = ({
       TravelersAndCurrency1760640000000,
       DestinationsAndSpots1760700000000,
       SearchedDestinations1760800000000,
+      PlanStops1761000000000,
     ],
     migrationsTableName: 'migrations',
     synchronize: false,
