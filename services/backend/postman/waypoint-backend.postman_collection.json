@@ -1,0 +1,941 @@
+{
+  "info": {
+    "name": "Waypoint backend",
+    "description": "Every route of `services/backend`. Sample trip: Tel Aviv → Lisbon, 12–16 May, 2 adults.\n\n**Setup (local):**\n1. `npx supabase start`, then `npm run dev` (backend on :4002).\n2. Set the collection variable `supabasePublishableKey` from `npx supabase status` (PUBLISHABLE_KEY). Change `email` if you like.\n3. Run **Auth → Send sign-in code**, open the local inbox at http://127.0.0.1:54324, copy the 6-digit code into the `otpCode` variable, then run **Auth → Verify code**. It saves `accessToken`; every other request sends it as a Bearer token.\n4. Tokens last ~1h: run **Auth → Refresh token** (or sign in again).\n\nRequests that create or find something save its id into a variable (`tripId`, `placeId`, `hotelId`, …) for the next ones. Every request gets a fresh `x-request-id`, so you can find it in the server log.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// A fresh request id per call, echoed back by the backend and stamped on its log lines.",
+          "pm.request.headers.upsert({ key: 'x-request-id', value: pm.variables.replaceIn('{{$guid}}') });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4002"
+    },
+    {
+      "key": "supabaseUrl",
+      "value": "http://127.0.0.1:54321"
+    },
+    {
+      "key": "supabasePublishableKey",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": "traveler@waypoint.local"
+    },
+    {
+      "key": "otpCode",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "countryCode",
+      "value": "PT"
+    },
+    {
+      "key": "cityName",
+      "value": "Lisbon"
+    },
+    {
+      "key": "placeId",
+      "value": ""
+    },
+    {
+      "key": "hotelId",
+      "value": ""
+    },
+    {
+      "key": "tripId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth (Supabase)",
+      "description": "Sign-in goes to Supabase Auth directly (as the app does), not to the backend.",
+      "item": [
+        {
+          "name": "Send sign-in code",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabasePublishableKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"create_user\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/otp",
+              "host": ["{{supabaseUrl}}"],
+              "path": ["auth", "v1", "otp"]
+            },
+            "description": "Emails a 6-digit code. Locally it lands in the inbox at http://127.0.0.1:54324. Put it in the `otpCode` variable."
+          }
+        },
+        {
+          "name": "Verify code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().access_token;",
+                  "  if (value) { pm.collectionVariables.set('accessToken', value); console.log('accessToken =', value); }",
+                  "}",
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().refresh_token;",
+                  "  if (value) { pm.collectionVariables.set('refreshToken', value); console.log('refreshToken =', value); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabasePublishableKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"email\",\n  \"email\": \"{{email}}\",\n  \"token\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/verify",
+              "host": ["{{supabaseUrl}}"],
+              "path": ["auth", "v1", "verify"]
+            },
+            "description": "Exchanges the code for a session and saves `accessToken` + `refreshToken`."
+          }
+        },
+        {
+          "name": "Refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().access_token;",
+                  "  if (value) { pm.collectionVariables.set('accessToken', value); console.log('accessToken =', value); }",
+                  "}",
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().refresh_token;",
+                  "  if (value) { pm.collectionVariables.set('refreshToken', value); console.log('refreshToken =', value); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "apikey",
+                "value": "{{supabasePublishableKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{supabaseUrl}}/auth/v1/token?grant_type=refresh_token",
+              "host": ["{{supabaseUrl}}"],
+              "path": ["auth", "v1", "token"],
+              "query": [
+                {
+                  "key": "grant_type",
+                  "value": "refresh_token"
+                }
+              ]
+            },
+            "description": "New access token from the refresh token (each refresh token works once)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Public liveness check."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Me",
+      "item": [
+        {
+          "name": "Get my profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            },
+            "description": "Creates the profile on the first call."
+          }
+        },
+        {
+          "name": "Update my profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sample Traveler\",\n  \"homeAirport\": \"TLV\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            },
+            "description": "`null` clears a field; leaving a key out keeps it."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Geo",
+      "item": [
+        {
+          "name": "List countries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/countries",
+              "host": ["{{baseUrl}}"],
+              "path": ["countries"]
+            }
+          }
+        },
+        {
+          "name": "List cities of a country",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/countries/{{countryCode}}/cities",
+              "host": ["{{baseUrl}}"],
+              "path": ["countries", "{{countryCode}}", "cities"]
+            }
+          }
+        },
+        {
+          "name": "City hotel prices (per night)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/countries/{{countryCode}}/cities/{{cityName}}/prices?from=2027-05-12&to=2027-05-16",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "countries",
+                "{{countryCode}}",
+                "cities",
+                "{{cityName}}",
+                "prices"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2027-05-12"
+                },
+                {
+                  "key": "to",
+                  "value": "2027-05-16"
+                }
+              ]
+            },
+            "description": "Average hotel price per night for each day, in USD — an estimate from liteAPI's price index. `from`/`to` are optional."
+          }
+        },
+        {
+          "name": "Search places",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().places?.[0]?.placeId;",
+                  "  if (value) { pm.collectionVariables.set('placeId', value); console.log('placeId =', value); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/places?q=Lisbon&type=locality",
+              "host": ["{{baseUrl}}"],
+              "path": ["places"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Lisbon"
+                },
+                {
+                  "key": "type",
+                  "value": "locality"
+                }
+              ]
+            },
+            "description": "Autocomplete (Google Places through liteAPI, cached). `type` is optional. Saves the first `placeId`."
+          }
+        },
+        {
+          "name": "Get place",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/places/{{placeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["places", "{{placeId}}"]
+            }
+          }
+        },
+        {
+          "name": "Search airports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/airports?q=Lisbon",
+              "host": ["{{baseUrl}}"],
+              "path": ["airports"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Lisbon"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hotels",
+      "item": [
+        {
+          "name": "List hotels in a city",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().hotels?.[0]?.id;",
+                  "  if (value) { pm.collectionVariables.set('hotelId', value); console.log('hotelId =', value); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hotels?type=city&countryCode={{countryCode}}&cityName={{cityName}}&limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["hotels"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "city"
+                },
+                {
+                  "key": "countryCode",
+                  "value": "{{countryCode}}"
+                },
+                {
+                  "key": "cityName",
+                  "value": "{{cityName}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Catalog only (no prices). Location is `type=city` (countryCode + cityName), `type=place` (placeId) or `type=coordinates` (lat, lng, radiusMeters). Saves the first `hotelId`."
+          }
+        },
+        {
+          "name": "List hotels near a point",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hotels?type=coordinates&lat=38.7223&lng=-9.1393&radiusMeters=3000",
+              "host": ["{{baseUrl}}"],
+              "path": ["hotels"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "coordinates"
+                },
+                {
+                  "key": "lat",
+                  "value": "38.7223"
+                },
+                {
+                  "key": "lng",
+                  "value": "-9.1393"
+                },
+                {
+                  "key": "radiusMeters",
+                  "value": "3000"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get hotel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hotels/{{hotelId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["hotels", "{{hotelId}}"]
+            }
+          }
+        },
+        {
+          "name": "Search hotel prices (city)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().offers?.[0]?.hotel?.id;",
+                  "  if (value) { pm.collectionVariables.set('hotelId', value); console.log('hotelId =', value); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": {\n    \"type\": \"city\",\n    \"countryCode\": \"{{countryCode}}\",\n    \"cityName\": \"{{cityName}}\"\n  },\n  \"checkin\": \"2027-05-12\",\n  \"checkout\": \"2027-05-16\",\n  \"adults\": 2,\n  \"childrenAges\": [],\n  \"currency\": \"EUR\",\n  \"guestNationality\": \"IL\",\n  \"limit\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/hotels/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["hotels", "search"]
+            },
+            "description": "Live rates, ranked best value first. `errors` lists sources that failed. Only `location`, `checkin`, `checkout` are required."
+          }
+        },
+        {
+          "name": "Search hotel prices (place)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": {\n    \"type\": \"place\",\n    \"placeId\": \"{{placeId}}\"\n  },\n  \"checkin\": \"2027-05-12\",\n  \"checkout\": \"2027-05-16\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/hotels/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["hotels", "search"]
+            }
+          }
+        },
+        {
+          "name": "Search hotel prices (near the plan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": {\n    \"type\": \"coordinates\",\n    \"lat\": 38.7115,\n    \"lng\": -9.1301,\n    \"radiusMeters\": 3000\n  },\n  \"checkin\": \"2027-05-12\",\n  \"checkout\": \"2027-05-16\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/hotels/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["hotels", "search"]
+            },
+            "description": "With coordinates, each offer also carries `distanceMeters`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Flights",
+      "item": [
+        {
+          "name": "Search flights (round trip)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin\": \"TLV\",\n  \"destination\": \"LIS\",\n  \"departDate\": \"2027-05-12\",\n  \"returnDate\": \"2027-05-16\",\n  \"adults\": 2,\n  \"children\": 0,\n  \"infants\": 0,\n  \"cabinClass\": \"economy\",\n  \"currency\": \"EUR\",\n  \"maxStops\": 1,\n  \"limit\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/flights/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["flights", "search"]
+            },
+            "description": "Live fares through liteAPI (flight access must be enabled on your account). Ranked best value first."
+          }
+        },
+        {
+          "name": "Search flights (one way)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin\": \"TLV\",\n  \"destination\": \"LIS\",\n  \"departDate\": \"2027-05-12\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/flights/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["flights", "search"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips",
+      "description": "Run in order: create → update → plan → selections → booked → get → delete.",
+      "item": [
+        {
+          "name": "List my trips",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trips",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips"]
+            }
+          }
+        },
+        {
+          "name": "Create trip (draft)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300) {",
+                  "  const value = pm.response.json().id;",
+                  "  if (value) { pm.collectionVariables.set('tripId', value); console.log('tripId =', value); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"styles\": [\n    \"food\",\n    \"culture\"\n  ],\n  \"pace\": \"balanced\",\n  \"adults\": 2,\n  \"children\": 0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips"]
+            },
+            "description": "Saves `tripId`."
+          }
+        },
+        {
+          "name": "Get trip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}"]
+            },
+            "description": "With spots, days and selections."
+          }
+        },
+        {
+          "name": "Update trip (destination, dates, spots)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"destinationId\": \"{{placeId}}\",\n  \"destinationName\": \"Lisbon\",\n  \"startDate\": \"2027-05-12\",\n  \"endDate\": \"2027-05-16\",\n  \"spots\": [\n    {\n      \"spotId\": \"belem-tower\",\n      \"name\": \"Belém Tower\"\n    },\n    {\n      \"spotId\": \"alfama\",\n      \"name\": \"Alfama\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}"]
+            }
+          }
+        },
+        {
+          "name": "Mark trip planned",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"planned\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}"]
+            },
+            "description": "Allowed: draft → planned (needs a destination), planned → draft. `booked` follows booking a selection; `past` is derived from the end date."
+          }
+        },
+        {
+          "name": "Save day plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"days\": [\n    {\n      \"dayIndex\": 0,\n      \"date\": \"2027-05-12\",\n      \"stops\": [\n        {\n          \"position\": 0,\n          \"spotId\": \"belem-tower\",\n          \"name\": \"Belém Tower\",\n          \"lat\": 38.6916,\n          \"lng\": -9.216,\n          \"startsAt\": \"09:30\",\n          \"minutes\": 90,\n          \"travelMinutesFromPrevious\": null,\n          \"isFixed\": false\n        },\n        {\n          \"position\": 1,\n          \"spotId\": \"alfama\",\n          \"name\": \"Alfama\",\n          \"lat\": 38.7115,\n          \"lng\": -9.1301,\n          \"startsAt\": \"12:00\",\n          \"minutes\": 120,\n          \"travelMinutesFromPrevious\": 25,\n          \"isFixed\": true\n        }\n      ]\n    },\n    {\n      \"dayIndex\": 1,\n      \"date\": \"2027-05-13\",\n      \"stops\": [\n        {\n          \"position\": 0,\n          \"spotId\": \"lx-factory\",\n          \"name\": \"LX Factory\",\n          \"lat\": 38.7036,\n          \"lng\": -9.1786,\n          \"startsAt\": \"10:00\",\n          \"minutes\": 120,\n          \"travelMinutesFromPrevious\": null,\n          \"isFixed\": false\n        }\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}/plan",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}", "plan"]
+            },
+            "description": "Replaces the whole plan. Days must fall inside the trip dates."
+          }
+        },
+        {
+          "name": "Select flight",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerSnapshot\": {\n    \"id\": \"tlv-lis-direct\",\n    \"note\": \"paste a FlightOffer from Search flights here\"\n  },\n  \"provider\": \"liteapi\",\n  \"deepLink\": \"https://whitelabel.invalid/booking?offerId=sample\",\n  \"price\": {\n    \"amountMinor\": 64020,\n    \"currency\": \"EUR\"\n  },\n  \"checkedAt\": \"2027-04-01T10:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}/selections/flight",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}", "selections", "flight"]
+            },
+            "description": "`kind` is flight | stay | ticket. Store the offer exactly as shown."
+          }
+        },
+        {
+          "name": "Select stay",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offerSnapshot\": {\n    \"hotel\": \"Casa Alfama (sample)\"\n  },\n  \"provider\": \"liteapi\",\n  \"deepLink\": \"https://whitelabel.invalid/hotels/lp-alfama\",\n  \"price\": {\n    \"amountMinor\": 52050,\n    \"currency\": \"EUR\"\n  },\n  \"checkedAt\": \"2027-04-01T10:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}/selections/stay",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}", "selections", "stay"]
+            }
+          }
+        },
+        {
+          "name": "Mark stay booked",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booked\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}/selections/stay/booked",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}", "selections", "stay", "booked"]
+            },
+            "description": "A planned trip becomes `booked`; unticking everything takes it back to `planned`."
+          }
+        },
+        {
+          "name": "Unmark stay booked",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"booked\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}/selections/stay/booked",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}", "selections", "stay", "booked"]
+            }
+          }
+        },
+        {
+          "name": "Delete trip",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trips", "{{tripId}}"]
+            },
+            "description": "204 on success."
+          }
+        }
+      ]
+    }
+  ]
+}
