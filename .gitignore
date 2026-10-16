@@ -27,10 +27,9 @@ coverage/
 *.orig.*
 web-build/
 
-# Prisma
-**/prisma/*.db
-**/prisma/*.db-journal
-**/generated/prisma/
+# TypeORM (sqlite is dev/test-only; Postgres is local Supabase or cloud)
+**/*.sqlite
+**/*.sqlite-journal
 
 # Supabase (local stack state; config.toml IS committed)
 supabase/.branches/

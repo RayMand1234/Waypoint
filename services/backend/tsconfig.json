@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "types": ["node"],
+    // TypeORM's @Entity / @Column are legacy decorators. Every column states
+    // its type explicitly, so no decorator metadata is emitted or needed
+    // (esbuild, which tsx and tsup use, cannot emit it anyway).
+    "experimentalDecorators": true,
+    // Entity fields are declared without initialisers; with define semantics
+    // each instance would get an own `undefined` property TypeORM then sees.
+    "useDefineForClassFields": false,
+    "noEmit": true,
+  },
+  "include": ["src"],
+}

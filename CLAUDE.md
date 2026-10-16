@@ -10,7 +10,7 @@ Shared engineering rules come from SAPI, mounted at `.claude/` (git submodule). 
 
 ## Product rules that shape the code
 
-- **Plan and compare only (years 1–2).** Waypoint never takes payment or books anything. Each part is booked on the partner site via a deep link: the chosen offer's own `deepLink`, from whichever provider supplied it (e.g. Aviasales for flights, liteAPI for stays), labelled with that site's name. Tickets link to official sites.
+- **Plan and compare only (years 1–2).** Waypoint never takes payment or books anything. Each part is booked on the partner site via a deep link: the chosen offer's own `deepLink`, from whichever provider supplied it (liteAPI's white-label site for flights and stays today), labelled with that site's name. Tickets link to official sites.
 - **No scraping** of Booking, Trivago, Skyscanner or similar. Data comes only from official APIs and affiliate programs.
 - **Ranking is "best value", never "who pays more".** Anything paid is labelled "Sponsored".
 - **Prices may be cached.** Every price shown carries its age ("checked 3h ago") and "final price confirmed on site".
@@ -24,15 +24,15 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 - **App — decided:** React Native (Expo), New Architecture, run as an Expo **development build** (not Expo Go — Unistyles ships native code).
 - **Styling — decided:** **Unistyles 3**. No MUI, no Tamagui, no NativeWind, no third-party pre-styled component kits — Waypoint's components are our own, built from the design system. Rules in "Styling" below.
 - **Backend — decided:** Node + **Express** (v5). Route handlers are plain functions, no classes, no DI container. Validate request input with Zod at the handler boundary.
-- **Database — decided:** **Supabase**-hosted Postgres, used as plain Postgres. **Prisma** is the data layer (schema file, generated client, plain-object results; no TypeORM, no decorator entities). Prisma uses Supabase's pooled URL at runtime and the direct URL for migrations. The free plan pauses idle projects and has no backups: fine for development, upgrade before real users.
+- **Database — decided:** **Supabase**-hosted Postgres, used as plain Postgres. **TypeORM** is the data layer: one `DataSource` per service, `@Entity` classes mapping its tables. Entity classes are the one deliberate exception to "no classes" — TypeORM's decorator mapping requires them — but nothing else about them is exceptional: a repository module (`repositories/*.repository.ts`) still takes the `DataSource` as a plain function argument and still returns plain objects, never an entity instance, past that file. TypeORM uses Supabase's pooled URL at runtime and the direct URL for migrations. The free plan pauses idle projects and has no backups: fine for development, upgrade before real users.
 - **Auth — decided:** **Supabase Auth** — email, Google, Apple. Implementation in "Auth" below.
 - **Cache — open:** Postgres first; add Redis (e.g. Upstash) only when measured load needs it.
 - **Free-tier services first.**
 
 ## Architecture
 
-- **Three layers:** mobile app → Waypoint backend services → external services. **The app never calls outside sources directly** (sole exception: Supabase Auth sign-in, see Stack). Its only data servers are the Waypoint services, through `apiRequest()` and React Query (SAPI `react-query-server-interaction`).
-- **Backend services:** `trips`, `search`, `planner`, `jobs` — each deployed separately, talking only through APIs. See "Repo shape".
+- **Three layers:** mobile app → Waypoint backend → external services. **The app never calls outside sources directly** (sole exception: Supabase Auth sign-in, see Stack). Its only data server is the Waypoint backend, through `apiRequest()` and React Query (SAPI `react-query-server-interaction`).
+- **Backend — one service:** `services/backend` (Express 5) serves the app: profiles, trips, geo reference data, hotels, flights. Layered routes → controllers → services → repositories / providers (see "Code conventions"). Split into more services only when a measured need appears. See "Repo shape".
 - **Provider adapters:** see the contract below. Swapping or adding a source never touches anything outside that source's adapter folder and the provider list.
 - **Day planning is hybrid:** a deterministic algorithm handles area grouping, opening hours and travel times; an LLM only picks spots for the traveler's styles and writes descriptions. Keep the two separate so the algorithm stays testable without the LLM.
 - **Destinations at launch:** a curated list of 50–100 cities tagged by style.
@@ -49,57 +49,53 @@ Items marked **decided** are settled. For anything marked **open**, ask before a
 
 **Server side**
 
-- `requireUser` (in `@waypoint/server-kit`, used by every service) verifies the token **locally** with `jose`: `createRemoteJWKSet(<SUPABASE_URL>/auth/v1/.well-known/jwks.json)` + `jwtVerify` checking issuer `<SUPABASE_URL>/auth/v1` and audience `authenticated`. Missing/invalid → 401. On success `res.locals.userId = payload.sub`.
+- `requireUser` (`services/backend/src/middleware/requireUser.ts`) verifies the token **locally** with `jose`: `createRemoteJWKSet(<SUPABASE_URL>/auth/v1/.well-known/jwks.json)` + `jwtVerify` checking issuer `<SUPABASE_URL>/auth/v1` and audience `authenticated`. Missing/invalid → 401. On success `res.locals.userId = payload.sub`, and the user id joins the request's log context.
 - Handlers trust only `res.locals.userId`, never a user id from the body or query.
 - The project must use **asymmetric JWT signing keys** (ES256), not the legacy shared secret.
-- Supabase owns the `auth` schema; Prisma never migrates it. Waypoint's `Profile` is keyed by the Supabase user id (`userId` = `auth.users.id` = JWT `sub`) and is created with an `upsert` on the user's first authenticated request.
+- Supabase owns the `auth` schema; TypeORM never migrates it. Waypoint's `Profile` is keyed by the Supabase user id (`userId` = `auth.users.id` = JWT `sub`) and is created with an `upsert` on the user's first authenticated request.
 - Never ship the secret / `service_role` key in the app; only the publishable key goes in `EXPO_PUBLIC_*` env vars.
 - Sign-out ends the session, but an issued access token stays valid until expiry (~1h). Acceptable for now; if instant revoke is needed, also check the token's `session_id` exists in `auth.sessions`.
 
 ## Provider adapter contract (agreed)
 
-Every external offer source (hotels, flights, later tickets) follows this shape. Shown for hotels; flights mirror it (`FlightProvider`, `searchAllFlights`).
+Every external offer source (hotels, flights, later tickets) follows this shape. Shown for hotels; flights mirror it (`FlightProvider`, same `searchAcross`).
 
 ```ts
 // Waypoint's own shapes live in @waypoint/contracts; no provider type leaks past an adapter.
 // ProviderHotelOffer = one offer from ONE provider (adapter output).
 // HotelOffer        = one hotel after merging, with every provider's price in `sources` (API output).
+// services/backend/src/providers/types.ts
 export type HotelProvider = {
   readonly id: ProviderId
-  readonly searchHotels: (query: HotelQuery, signal: AbortSignal) => Promise<ReadonlyArray<ProviderHotelOffer>>
-}
+  readonly searchHotels: (query: HotelSearchRequest, signal: AbortSignal) => ProviderResult<readonly ProviderHotelOffer[]>
+}  // ProviderResult<T> = Promise<Result<T, ProviderFailure>> — expected failures are returned, not thrown
 
-// hotels/searchAllHotels.ts — the one entry point the rest of the backend calls
-export const searchAllHotels =
-  (providers: ReadonlyArray<HotelProvider>) =>
-  async (query: HotelQuery): Promise<HotelSearchResult> => {
-    const settled = await Promise.allSettled(
-      providers.map((p) => p.searchHotels(query, AbortSignal.timeout(PROVIDER_TIMEOUT_MS)))
-    )
-    const { offers, errors } = collectResults(providers, settled)   // pure: ProviderHotelOffer[] + ProviderError[]
-    return { offers: rankByValue(mergeSameHotel(offers)), errors }  // pure: HotelOffer[] (merged, ranked)
-  }
+// services/hotels.service.ts
+const { offers, errors } = await searchAcross({ providers, call: (p, signal) => p.searchHotels(request, signal), timeoutMs, logger })
+return ok({ offers: toHotelOffers(offers, request), errors })   // pure: ranked HotelOffer[]
 
-// composition root — changing source = editing this list
-const searchHotels = searchAllHotels([liteApiProvider])
+// composition root (src/index.ts) — changing source = editing this list
+providers: [createLiteApiHotelProvider(liteApiDeps)]
 ```
 
 Rules:
 
-1. **A provider is a record of functions, not a class.** One folder per provider (`hotels/providers/liteapi/`), exporting one `HotelProvider` value.
+1. **A provider is a record of functions, not a class.** One folder per provider (`src/providers/liteapi/`), exporting factory functions that return the types in `providers/types.ts` (`GeoSource`, `HotelCatalog`, `HotelProvider`, `FlightProvider`).
 2. **Adapters translate.** Each adapter Zod-parses the raw response and maps it to Waypoint's `ProviderHotelOffer` / `ProviderFlightOffer`. Nothing outside the adapter folder imports provider types, SDKs or field names. Adapters parse, never cast.
-3. **I/O only in adapters.** Collecting results, matching the same hotel across providers (`mergeSameHotel`: normalized name + distance threshold), keeping the lowest price, and value scoring are pure functions with their own tests.
-4. **One failing source never fails the search.** `Promise.allSettled` + a per-provider timeout; failures come back as typed `ProviderError`s beside the offers, so the UI can show partial results.
+3. **I/O only in adapters.** Mapping to offers, value scoring (`services/value.ts`) and — once a second source exists — matching the same hotel across providers (normalized name + distance threshold, lowest price wins) are pure functions with their own tests.
+4. **One failing source never fails the search.** `searchAcross`: `Promise.allSettled` + a per-provider timeout; failures come back as typed `ProviderError`s beside the offers, so the UI can show partial results. Partial results are never cached.
 5. **Two offer shapes, never mixed up.** Every `ProviderHotelOffer` / `ProviderFlightOffer` carries `provider`, `providerOfferId`, `price`, `checkedAt` (for "checked 3h ago") and `deepLink`. Merging turns them into `HotelOffer` / `FlightOffer`, which keep each provider's entry in `sources` (feeds "Where we found it") plus `bestPrice` and `value`. Only the merged shapes leave the service.
-6. **Shared contract test + fake provider.** One test suite every adapter must pass. A fake provider returns the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults) so the app and tests run with no API keys.
+6. **Adapters are tested against a fake `fetch`** returning the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults) in the provider's raw shape (`src/testing/sampleTrip.ts`), so tests need no API key. Running the server needs a liteAPI key (the sandbox key is free).
 7. **Search only, for now.** Waypoint is plan-only, so `HotelProvider` has no prebook/book. If in-app booking is added later, it's a separate `HotelBookingProvider` type implemented only by sources that support it.
 8. **Provider order never affects ranking.** Ranking is value-based only; paid placement is labelled "Sponsored".
-9. Extract the shared `allSettled` + timeout + error-collection helper once a second category (flights) duplicates it, not before.
+9. Hotels and flights share `searchAcross`; geo lookups and the hotel catalog are single-source calls through the same liteAPI client.
 
 ## Data sources
 
-- **Hotels — liteAPI (Nuitée):** the starting source. Aggregates 300+ suppliers into one API with live rates. Develop against the free sandbox key (test data, simulated bookings); production key needed before real users. Rate search is free under fair use — confirm their terms on search-heavy, booking-light usage before launch.
-- **Flights — Travelpayouts / Aviasales Data API:** no approval needed. Data is **cached** from users' searches (kept up to 7 days, some endpoints only 48h), prices default to RUB and carry `expires_at` — convert currency and drop expired prices. Use for "from €X"; live search needs the Aviasales Search API (approval required).
+- **Hotels — liteAPI (Nuitée):** the only hotel source for now. Aggregates 300+ suppliers into one API with live rates. Develop against the free sandbox key (test data, simulated bookings); production key needed before real users. Rate search is free under fair use — confirm their terms on search-heavy, booking-light usage before launch.
+- **Flights — liteAPI Flights (Nuitée Connect):** live fares through `POST /flights/rates`, same key as hotels. Access is not on by default — ask Nuitée to enable it, for the sandbox too. The white-label deep-link format for flights is not documented yet; `offerCheckoutLink` uses the hotel `/booking?offerId=` entry until confirmed.
+- **Geo — liteAPI data endpoints:** countries, cities of a country, places (Google Places, **paid per call** — always cached), airports, and the city hotel price index (`/prices/city`, USD, an estimate).
+- **liteAPI is the only source for now.** Travelpayouts / Aviasales is not used.
 - **Travelpayouts has no hotel data:** Hotellook closed in October 2025 and its API is disabled. Do not use it.
 - **Apply for (approval/contract required):** Booking.com Demand API (managed affiliate), Agoda Demand API (meta-search model), Expedia Rapid, Aviasales Search API, Kiwi.com, Skyscanner (needs traffic). Each becomes one new adapter when approved.
 - **Airbnb:** no public API — link-out only, no prices.
@@ -130,7 +126,7 @@ Rules:
 - **Icons:** `lucide-react-native`, 1.75 stroke, 20/24 px, in `ink` / `ink-muted` (`on-midnight` on midnight fills). No emoji.
 
 
-## Repo shape (decided: monorepo of independently deployable services)
+## Repo shape (decided: monorepo, one backend service for now)
 
 ```
 waypoint/
@@ -144,59 +140,52 @@ waypoint/
       src/features/<name>/{components,hooks,utils}
       src/shared/         cross-feature components/hooks/utils, apiClient, auth
       src/theme/          tokens.ts + unistyles.ts
-  services/               each one: own package.json, own Express 5 server, own deploy
-    trips/                profiles, trips, days, saved picks
-    search/               hotel + flight aggregation, provider adapters, value scoring, deep links
-    planner/              destinations, spots, day plans, travel times, LLM text
-    jobs/                 scheduled/background work (cache refresh, cleanup); no public routes
+  services/
+    backend/              the one Express 5 API: profiles, trips, geo, hotels, flights, liteAPI adapter
   packages/
-    contracts/            @waypoint/contracts — Zod schemas + inferred types for every service's API
-    server-kit/           @waypoint/server-kit — Express helpers every service uses
+    contracts/            @waypoint/contracts — Zod schemas + inferred types for every API shape
 ```
 
-**Services**
+**Backend**
 
-- **Each service is deployed on its own** and owns one domain. It exposes an HTTP API and nothing else; there is no shared in-process code path between services.
-- **Services talk only through each other's APIs**, never by importing another service's code and never by reading another service's tables.
-- Service-to-service calls use the typed client from `@waypoint/server-kit` with the callee's `@waypoint/contracts` schemas: per-call timeout, response parsed with Zod, failure returned as a typed result (not thrown). A slow or down service must degrade the caller, not crash it.
-- On a user's behalf, a service **forwards the user's bearer token**; the callee verifies it with the same `requireUser`. `jobs` (no user) calls with an internal service key (`INTERNAL_API_KEY`, server-side env only), checked by a `requireService` middleware. Internal-only routes accept only the service key.
-- Every service has `GET /health`.
+- **One service, `services/backend`**, deployed on its own, exposing an HTTP API and nothing else. Its own `CLAUDE.md` has the layer map.
+- Auth, request ids, logging and error handling live inside it (`middleware/`, `observability/`, `http/`). If a second service is ever added, move the shared plumbing into a package then — not before.
+- `GET /health` is public; every other route is behind `requireUser`.
 
 **Data**
 
-- One Supabase Postgres, **one Postgres schema per service** (`trips`, `search`, `planner`, `jobs`). Each service has its own `prisma/schema.prisma` and migrations, pointed at its own schema via the connection URL (`?schema=<service>`), and never touches another schema. Need another service's data → call its API.
-- Supabase's `auth` schema belongs to Supabase; no service migrates it.
+- One Supabase Postgres; the backend uses its own schema (`DATABASE_SCHEMA`, default `backend`) with its own TypeORM entities and migrations (`npm run migrate -w services/backend`). Supabase's `auth` schema belongs to Supabase.
+- Provider answers are cached in the `cache_entries` table (Postgres first; Redis only when measured load needs it).
 
 **Packages**
 
-- `@waypoint/contracts` is the single definition of every API shape (`HotelOffer`, `FlightOffer`, `Trip`, request/response schemas), organized per service (`contracts/search`, `contracts/trips`, …). Servers validate against it; the app's `apiRequest()` parses responses with it; services parse each other's responses with it. Pure: Zod schemas, types and tiny pure helpers (`ok`, `err`, `assertNever`); no I/O, no framework imports.
-- `@waypoint/server-kit` holds cross-service plumbing only: `requireUser`, `requireService`, the typed service client, error/health handlers, env parsing. **No business logic.**
-- Provider-specific types (liteAPI, Aviasales) live only inside `services/search/src/**/providers/` — never in `packages/`.
+- `@waypoint/contracts` is the single definition of every API shape, per area (`common`, `trips`, `geo`, `hotels`, `flights`). The backend validates against it; the app's `apiRequest()` parses responses with it. Pure: Zod schemas, types and tiny pure helpers (`ok`, `err`, `assertNever`); no I/O, no framework imports.
+- Provider-specific types (liteAPI) live only inside `services/backend/src/providers/liteapi/` — never in `packages/`.
 - Code moves into a package only once two or more services/apps need it.
 
-**App ↔ services**
+**App ↔ backend**
 
-- The app calls the public services (`trips`, `search`, `planner`) directly, each with its own base URL (`EXPO_PUBLIC_TRIPS_URL`, …). `apiRequest(service, path, schema)` picks the base URL, attaches the token and parses with the contract. A single API gateway in front is a later option, not MVP.
+- The app calls `services/backend` directly (`EXPO_PUBLIC_API_URL`). `apiRequest(path, schema, init)` attaches the bearer token and an `x-request-id`, parses with the contract, and throws a typed `ApiError` otherwise.
 
 **Tooling & deployment**
 
 - **npm workspaces** only. No Turborepo/Nx until build times prove a need.
-- Each service builds and deploys on its own (one service per host on Railway/Render), with its own env vars. Every running service costs money on most hosts — keep the service count at these four until a split is clearly justified.
+- The backend builds with `tsup` (bundling `@waypoint/contracts`) into `dist/` and deploys on its own (Railway/Render). Run `migrate:prod` before starting a new version. Every running service costs money — keep it at one until a split is clearly justified.
 - Paths in other sections (e.g. `src/theme/`, `hotels/`) are relative to the app or service they belong to.
 
 ## Local development (default: fully offline)
 
-Development runs against a **local Supabase stack and fake providers** by default. Cloud Supabase, liteAPI, Aviasales and the LLM are opt-in per service via env vars.
+Development runs against a **local Supabase stack** and the **liteAPI sandbox** (free key, test data).
 
 - **Supabase CLI** is a root dev dependency (`npx supabase …`); config lives in `supabase/config.toml`. Docker must be running.
   - `npx supabase start` starts Postgres, Auth, Studio and a local email inbox. `npx supabase stop` stops it and keeps the data.
   - Default local addresses: API + Auth `http://127.0.0.1:54321` · Postgres `postgresql://postgres:postgres@127.0.0.1:54322/postgres` · Studio `http://127.0.0.1:54323` · email inbox `http://127.0.0.1:54324`. Take keys from `npx supabase status`, never hard-code them.
-- **Database:** each service's `DATABASE_URL` points at local Postgres with its own `?schema=<service>`. Migrations are Prisma's (`prisma migrate dev` per service); the Supabase CLI runs the database but does not own Waypoint's migrations.
+- **Database:** `DATABASE_URL` points at local Postgres, `DATABASE_SCHEMA=backend`. Migrations are TypeORM's, run with `npm run migrate -w services/backend` (creates the schema if missing); the Supabase CLI runs the database but does not own Waypoint's migrations.
 - **Auth:** email login codes land in the local inbox, not real email. `requireUser` works unchanged — only `SUPABASE_URL` differs (local Auth serves its own JWKS). Google and Apple sign-in need the internet; use email login offline.
-- **Providers:** the composition root picks providers from env, e.g. `HOTEL_PROVIDERS=fake` (default in development) or `HOTEL_PROVIDERS=liteapi`; same for `FLIGHT_PROVIDERS`. The fake providers return the sample trip (Tel Aviv → Lisbon, 12–16 May, 2 adults). The planner's LLM step has a fake too (fixed descriptions), selected with `LLM_PROVIDER=fake`. Unknown provider names fail at startup, not at request time.
-- **Env:** each service and the app has a committed `.env.example` with the local defaults; real `.env` / `.env.local` files are git-ignored. Env vars are parsed with Zod at startup (`@waypoint/server-kit`), and a service refuses to start with a missing or invalid value.
-- **Phone vs simulator:** the iOS simulator can use `127.0.0.1`. A real phone can't — point `EXPO_PUBLIC_SUPABASE_URL` and the `EXPO_PUBLIC_*_URL` service URLs at the computer's local network IP.
-- **Ports:** each service has a fixed local port, set in its `.env.example` (trips 4001, search 4002, planner 4003, jobs 4004).
+- **Providers:** liteAPI only — `LITEAPI_KEY` (sandbox key locally) and `LITEAPI_WHITELABEL_URL` (the white-label booking site deep links open — optional outside production, where links fall back to a placeholder; required in production). Tests never call liteAPI; they use a fake `fetch`.
+- **Env:** the backend and the app each have a committed `.env.example` with the local defaults; real `.env` / `.env.local` files are git-ignored. Env vars are parsed with Zod at startup (`services/backend/src/env.ts`), and the backend refuses to start with a missing or invalid value.
+- **Phone vs simulator:** the iOS simulator can use `127.0.0.1`. A real phone can't — point `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_API_URL` at the computer's local network IP.
+- **Port:** the backend listens on 4002 locally (`.env.example`).
 
 ## Toolchain (decided defaults — change here, not ad hoc)
 
@@ -209,29 +198,35 @@ Development runs against a **local Supabase stack and fake providers** by defaul
 - **App navigation:** **Expo Router** (file-based, `apps/mobile/app/`).
 - **Validation:** Zod everywhere (contracts, env, provider responses).
 - **Root scripts:** `npm run dev` (all services + local Supabase check, via `concurrently`), `npm run typecheck`, `npm run lint`, `npm test`, `npm run format`. Each workspace has the same script names so `npm run <script> --workspaces --if-present` works.
-- Use the latest stable version of each tool at setup time and pin it exactly in `package.json`.
+- Use the latest stable version of each tool at setup time and pin it exactly in `package.json`. For the app, take versions from `npx expo install` (SDK-compatible), then pin.
+- **One React copy:** `react` / `react-dom` are pinned at the root to the Expo SDK's version — npm hoists peer dependencies to the newest release otherwise, and two Reacts break hooks.
+- **TypeScript 6** no longer includes every `@types/*` package by default; list what a workspace needs in `types`.
 
 ## Code conventions
 
-**Inside a service** (`services/<name>/`):
+**Inside the backend** (`services/backend/`) — layered, one direction only:
 
 ```
 src/
-  index.ts          composition root ONLY: parseEnv → build deps (Prisma client, providers, service clients) → createApp(deps) → listen
-  app.ts            createApp(deps): Express app with middleware, routers, health, error handler — no listen, no env reads (tests use it)
-  env.ts            Zod env schema for this service
-  <domain>/
-    routes.ts       thin HTTP: parse input with the contract schema → call logic/queries → map Result to status + body
-    queries.ts      Prisma reads/writes only; returns plain objects, never Prisma model types past this file
-    logic.ts        pure functions: no I/O, no Date.now()/random (pass `now` in), fully unit-tested
-    providers/      only where an external source exists (search, planner): one folder per provider + fake/
-    *.test.ts       next to what they test
-prisma/schema.prisma
-.env.example
+  index.ts          composition root ONLY: parseEnv → logger → DataSource → liteAPI adapters → services → createApp(deps) → listen
+  app.ts            createApp(deps): middleware, health, API routers, 404, error handler — no listen, no env reads (tests use it)
+  env.ts            Zod env schema
+  routes/           <area>.routes.ts — path + method → controller handler; index.ts puts the API behind requireUser
+  controllers/      <area>.controller.ts — parse input with the contract schema → call one service → sendResult. No logic.
+  services/         <area>.service.ts — orchestration, returns Result<T, ServiceError> (never HTTP);
+                    *.logic.ts / value.ts — pure rules: no I/O, no Date.now() (pass `now` in), fully unit-tested
+  repositories/     TypeORM reads/writes only; returns contract types, never an entity instance
+  providers/        types.ts (Waypoint's provider interfaces), searchAcross.ts, one folder per provider (liteapi/)
+  entities/ db/     TypeORM entities, data source, migrations
+  middleware/ http/ observability/   auth, request context, access log, errors, validation, logger, traced fetch
+  lib/              small pure helpers (money, dates, distance, stable keys)
+  testing/          test-only helpers (fake fetch, test JWKS, log capture, sample data)
+  *.test.ts         next to what they test
 ```
 
-- **Dependencies are function arguments**, never module-level singletons or a container: `createTripsRouter({ db, now })`. That's how tests swap in fakes.
-- A domain folder exports its public pieces from an `index.ts`; other folders import only from there.
+- **Dependencies are function arguments**, never module-level singletons or a container: `createTripsService({ trips, now })`, `createTripsController(tripsService)`. That's how tests swap in fakes.
+- `ServiceError` (`services/errors.ts`) → HTTP status happens in one place: `http/respond.ts`.
+- **Logging:** use the injected `logger`; never pass request ids by hand — the request context adds `requestId` / `userId` to every line. Log an `Error` through `serializeError`. Never log tokens, keys, query strings or bodies.
 
 **Inside the app** (`apps/mobile/`):
 
@@ -256,7 +251,7 @@ export const err = <E>(error: E): Result<never, E> => ({ ok: false, error })
 ```
 
 - Error types are discriminated unions with a `type` field (`{ type: 'not-found' } | { type: 'provider-timeout'; provider: ProviderId }`); every `switch` on them ends in `assertNever`.
-- `throw` only for programmer errors and broken invariants; the server-kit error handler turns those into a 500 and reports them.
+- `throw` only for programmer errors and broken invariants; the backend's error handler (`middleware/errorHandler.ts`) turns those into a 500 and logs them with the request id.
 - **HTTP error body**, defined in contracts and used by every service: `{ "error": { "code": "<kebab-case>", "message": "<human sentence>" } }`. Routes map each error `type` to a status explicitly.
 - **Money** is `{ amountMinor: number; currency: 'EUR' | … }` (integer minor units), never a float. **Dates** cross the wire as ISO strings, validated by Zod.
 
@@ -265,4 +260,5 @@ export const err = <E>(error: E): Result<never, E> => ({ ok: false, error })
 One `CLAUDE.md` per module, at that module's own root, saying what it is responsible for, what it must not do, and what crosses its boundaries. Read the one for the module you're touching instead of the whole repo — and update it in the same commit when its role, boundaries or connections change.
 
 - `packages/contracts/` — every API shape, as Zod schemas plus the shared `Result` / `Money` / error-body primitives. → its own `CLAUDE.md`.
-- `packages/server-kit/` — the Express plumbing every service wires up: env parsing, auth, request ids, errors, health, the service client. → its own `CLAUDE.md`.
+- `services/backend/` — the one API: layers, tracing, caching, ranking, liteAPI adapter. → its own `CLAUDE.md`.
+- `apps/mobile/` — the app: routes, theme, shared design-system components, features, data flow. → its own `CLAUDE.md`.

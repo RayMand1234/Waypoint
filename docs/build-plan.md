@@ -33,7 +33,7 @@ P0-A ──► P0-B (trips service)
 
 ### P0-A · Repo foundation — one agent, merges first, blocks everything
 
-- [x] Root: `package.json` (workspaces `apps/*`, `services/*`, `packages/*`; root scripts per `CLAUDE.md` Toolchain), `.nvmrc`, `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `.editorconfig`, `.gitignore` (env files, `dist`, `node_modules`, Expo and Prisma artifacts).
+- [x] Root: `package.json` (workspaces `apps/*`, `services/*`, `packages/*`; root scripts per `CLAUDE.md` Toolchain), `.nvmrc`, `tsconfig.base.json`, `eslint.config.js`, `.prettierrc`, `.editorconfig`, `.gitignore` (env files, `dist`, `node_modules`, Expo and TypeORM build artifacts).
 - [x] `npx supabase init`: `supabase/config.toml` with email OTP sign-in on and the email template including `{{ .Token }}`; note asymmetric signing keys.
 - [x] `packages/contracts` (`@waypoint/contracts`): `common/` — `Result`, `ok`, `err`, `assertNever`, `Money`, `ProviderId`, ISO date schema, the HTTP error body; `trips/` — `Profile`, `Trip`, trip status, picks, `TripDay`, `TripStop`, `TripSelection`, and every request/response schema for the trips routes in `docs/architecture.md` §3.
 - [x] `packages/server-kit` (`@waypoint/server-kit`): `parseEnv(schema)`, `requireUser` (jose + JWKS, per `CLAUDE.md` Auth), `requireService` (`INTERNAL_API_KEY`), `requestId` (`x-request-id` in and forwarded), `errorHandler`, `notFound`, `healthRoute`, `createServiceClient` (timeout + Zod parse + `Result`, forwards bearer token and request id).
@@ -44,7 +44,7 @@ P0-A ──► P0-B (trips service)
 ### P0-B · `trips` service — after P0-A
 
 - [ ] `services/trips` per `CLAUDE.md` Code conventions; port 4001; `.env.example` with local defaults.
-- [ ] `prisma/schema.prisma` for the `trips` schema exactly as `docs/architecture.md` §5 (Profile, Trip, TripSpot, TripDay, TripStop, TripSelection); first migration.
+- [ ] TypeORM entities for the `trips` schema exactly as `docs/architecture.md` §5 (Profile, Trip, TripSpot, TripDay, TripStop, TripSelection); first migration.
 - [ ] Routes from `docs/architecture.md` §3 (`/me`, `/trips`, `/trips/:id`, `/plan`, `/selections/:kind`, `…/booked`), all behind `requireUser`, every query scoped to `res.locals.userId`. `GET /me` upserts the profile on first call.
 - [ ] Tests: pure logic (status transitions, ownership checks); routes via supertest with signed test tokens; another user's trip returns 404, never 403.
 - **Owns:** `services/trips/**`; may add to `packages/contracts/src/trips/` additively.

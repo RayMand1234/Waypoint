@@ -1,7 +1,8 @@
-import js from '@eslint/js'
-import prettier from 'eslint-config-prettier'
-import globals from 'globals'
-import tseslint from 'typescript-eslint'
+import js from '@eslint/js';
+import prettier from 'eslint-config-prettier';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
@@ -13,12 +14,17 @@ export default tseslint.config(
       '**/generated/prisma/**',
       'docs/**',
       'supabase/**',
+      'apps/mobile/.expo/**',
+      'apps/mobile/expo-env.d.ts',
     ],
   },
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
-    extends: [tseslint.configs.strictTypeChecked, tseslint.configs.stylisticTypeChecked],
+    extends: [
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+    ],
     languageOptions: {
       parserOptions: {
         projectService: true,
@@ -32,7 +38,11 @@ export default tseslint.config(
       // An unused `_`-prefixed binding is a deliberately discarded value.
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
       ],
       // Every switch over a union must cover every member (callers still end
       // theirs in assertNever by convention; the rule itself only checks
@@ -50,7 +60,51 @@ export default tseslint.config(
       ],
       'prefer-const': 'error',
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      // A blank line before `return` and after a run of declarations, so a
+      // function reads as separated statements/paragraphs, not one block.
+      'padding-line-between-statements': [
+        'error',
+        { blankLine: 'always', prev: '*', next: 'return' },
+        { blankLine: 'always', prev: ['const', 'let', 'var'], next: '*' },
+        {
+          blankLine: 'any',
+          prev: ['const', 'let', 'var'],
+          next: ['const', 'let', 'var'],
+        },
+      ],
     },
+  },
+  {
+    // React rules for the app: hooks only at the top level, complete deps.
+    files: ['apps/mobile/**/*.tsx', 'apps/mobile/**/*.ts'],
+    extends: [reactHooks.configs.flat['recommended-latest']],
+  },
+  {
+    // Code that runs on the phone. Hermes lacks the ES2023 copying array
+    // methods (toSorted & co.) that Node — and so Jest — has: tests pass, the app
+    // crashes with "undefined is not a function". Copy, then sort/reverse/splice.
+    files: [
+      'apps/mobile/src/**/*.{ts,tsx}',
+      'apps/mobile/app/**/*.{ts,tsx}',
+      'packages/contracts/src/**/*.ts',
+    ],
+    ignores: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "CallExpression > MemberExpression.callee > Identifier.property[name=/^(toSorted|toReversed|toSpliced|with)$/]",
+          message:
+            'Hermes has no toSorted/toReversed/toSpliced/with — copy first: [...list].sort(…).',
+        },
+      ],
+    },
+  },
+  {
+    // The app's Babel / Jest config files are CommonJS run by Node.
+    files: ['apps/mobile/*.js'],
+    languageOptions: { globals: globals.node, sourceType: 'commonjs' },
   },
   {
     // Config and scripts are plain Node ESM, outside any TypeScript project.
@@ -62,4 +116,4 @@ export default tseslint.config(
     rules: { 'no-console': 'off' },
   },
   prettier,
-)
+);

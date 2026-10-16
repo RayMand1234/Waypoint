@@ -4,5 +4,5 @@
  * runtime, that is a broken invariant, so it throws.
  */
 export const assertNever = (value: never): never => {
-  throw new Error(`Unhandled union member: ${JSON.stringify(value)}`)
-}
+  throw new Error(`Unhandled union member: ${JSON.stringify(value)}`);
+};
