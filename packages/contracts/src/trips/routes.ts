@@ -1,15 +1,21 @@
-import { z } from 'zod'
-import { isoDateSchema } from '../common/index.ts'
-import { tripDayInputSchema, tripDaySchema } from './plan.ts'
-import { iataCodeSchema, profileSchema } from './profile.ts'
-import { selectionKindSchema, tripSelectionSchema } from './selection.ts'
+import { z } from 'zod';
+import {
+  childAgeSchema,
+  currencySchema,
+  iataCodeSchema,
+  isoDateSchema,
+  MAX_CHILDREN,
+} from '../common/index.ts';
+import { tripDayInputSchema, tripDaySchema } from './plan.ts';
+import { profileSchema } from './profile.ts';
+import { selectionKindSchema, tripSelectionSchema } from './selection.ts';
 import {
   tripPaceSchema,
   tripSchema,
   tripSpotSchema,
-  tripStatusSchema,
+  storedTripStatusSchema,
   tripStyleSchema,
-} from './trip.ts'
+} from './trip.ts';
 
 // Request bodies are strict: an unknown field is a bug in the caller, not
 // something to silently ignore. Responses are not, so adding a field to a
@@ -20,13 +26,13 @@ export const tripDetailSchema = tripSchema.extend({
   spots: z.array(tripSpotSchema),
   days: z.array(tripDaySchema),
   selections: z.array(tripSelectionSchema),
-})
-export type TripDetail = z.infer<typeof tripDetailSchema>
+});
+export type TripDetail = z.infer<typeof tripDetailSchema>;
 
 /* ── GET /me · PATCH /me ───────────────────────────────────────────────── */
 
-export const getMeResponseSchema = profileSchema
-export type GetMeResponse = z.infer<typeof getMeResponseSchema>
+export const getMeResponseSchema = profileSchema;
+export type GetMeResponse = z.infer<typeof getMeResponseSchema>;
 
 /**
  * `null` clears a field; an absent field is left alone. `z.exactOptional`
@@ -40,16 +46,32 @@ export type GetMeResponse = z.infer<typeof getMeResponseSchema>
 export const updateMeRequestSchema = z.strictObject({
   name: z.exactOptional(z.string().min(1).nullable()),
   homeAirport: z.exactOptional(iataCodeSchema.nullable()),
-})
-export type UpdateMeRequest = z.infer<typeof updateMeRequestSchema>
+  currency: z.exactOptional(currencySchema),
+});
+export type UpdateMeRequest = z.infer<typeof updateMeRequestSchema>;
 
-export const updateMeResponseSchema = profileSchema
-export type UpdateMeResponse = z.infer<typeof updateMeResponseSchema>
+export const updateMeResponseSchema = profileSchema;
+export type UpdateMeResponse = z.infer<typeof updateMeResponseSchema>;
 
 /* ── GET /trips · POST /trips ──────────────────────────────────────────── */
 
-export const listTripsResponseSchema = z.object({ trips: z.array(tripSchema) })
-export type ListTripsResponse = z.infer<typeof listTripsResponseSchema>
+/**
+ * A row of "My waypoints": the trip plus how far its plan has got, so the app
+ * can show progress and resume a draft at the right step without loading
+ * every trip in full.
+ */
+export const tripListItemSchema = tripSchema.extend({
+  /** Days in the saved plan; 0 until the day plan is saved. */
+  planDays: z.number().int().min(0),
+  /** Which parts have an offer chosen, e.g. `['flight']`. */
+  selections: z.array(selectionKindSchema),
+});
+export type TripListItem = z.infer<typeof tripListItemSchema>;
+
+export const listTripsResponseSchema = z.object({
+  trips: z.array(tripListItemSchema),
+});
+export type ListTripsResponse = z.infer<typeof listTripsResponseSchema>;
 
 /**
  * Step 1 creates the draft. The defaults are the sample trip's party size, so a
@@ -59,20 +81,21 @@ export const createTripRequestSchema = z.strictObject({
   styles: z.array(tripStyleSchema).default([]),
   pace: tripPaceSchema.default('balanced'),
   adults: z.number().int().min(1).default(2),
-  children: z.number().int().min(0).default(0),
-})
-export type CreateTripRequest = z.infer<typeof createTripRequestSchema>
+  childrenAges: z.array(childAgeSchema).max(MAX_CHILDREN).default([]),
+  originAirport: iataCodeSchema.nullable().default(null),
+});
+export type CreateTripRequest = z.infer<typeof createTripRequestSchema>;
 
-export const createTripResponseSchema = tripSchema
-export type CreateTripResponse = z.infer<typeof createTripResponseSchema>
+export const createTripResponseSchema = tripSchema;
+export type CreateTripResponse = z.infer<typeof createTripResponseSchema>;
 
 /* ── GET · PATCH · DELETE /trips/:id ───────────────────────────────────── */
 
-export const tripParamsSchema = z.object({ id: z.uuid() })
-export type TripParams = z.infer<typeof tripParamsSchema>
+export const tripParamsSchema = z.object({ id: z.uuid() });
+export type TripParams = z.infer<typeof tripParamsSchema>;
 
-export const getTripResponseSchema = tripDetailSchema
-export type GetTripResponse = z.infer<typeof getTripResponseSchema>
+export const getTripResponseSchema = tripDetailSchema;
+export type GetTripResponse = z.infer<typeof getTripResponseSchema>;
 
 /**
  * Every step's picks go through here as the traveler moves, so a draft survives
@@ -81,40 +104,41 @@ export type GetTripResponse = z.infer<typeof getTripResponseSchema>
  * fields use `z.exactOptional` rather than plain `.optional()`.
  */
 export const updateTripRequestSchema = z.strictObject({
-  status: z.exactOptional(tripStatusSchema),
+  status: z.exactOptional(storedTripStatusSchema),
   styles: z.exactOptional(z.array(tripStyleSchema)),
   pace: z.exactOptional(tripPaceSchema),
   destinationId: z.exactOptional(z.string().min(1).nullable()),
   destinationName: z.exactOptional(z.string().min(1).nullable()),
   startDate: z.exactOptional(isoDateSchema.nullable()),
   endDate: z.exactOptional(isoDateSchema.nullable()),
+  originAirport: z.exactOptional(iataCodeSchema.nullable()),
   adults: z.exactOptional(z.number().int().min(1)),
-  children: z.exactOptional(z.number().int().min(0)),
+  childrenAges: z.exactOptional(z.array(childAgeSchema).max(MAX_CHILDREN)),
   spots: z.exactOptional(z.array(tripSpotSchema)),
-})
-export type UpdateTripRequest = z.infer<typeof updateTripRequestSchema>
+});
+export type UpdateTripRequest = z.infer<typeof updateTripRequestSchema>;
 
-export const updateTripResponseSchema = tripSchema
-export type UpdateTripResponse = z.infer<typeof updateTripResponseSchema>
+export const updateTripResponseSchema = tripSchema;
+export type UpdateTripResponse = z.infer<typeof updateTripResponseSchema>;
 
 /* ── PUT /trips/:id/plan ───────────────────────────────────────────────── */
 
-/** Replaces the whole plan: `planner` built it, `trips` stores it as given. */
+/** Replaces the whole plan, stored exactly as the app sends it. */
 export const putPlanRequestSchema = z.strictObject({
   days: z.array(tripDayInputSchema).min(1),
-})
-export type PutPlanRequest = z.infer<typeof putPlanRequestSchema>
+});
+export type PutPlanRequest = z.infer<typeof putPlanRequestSchema>;
 
-export const putPlanResponseSchema = z.object({ days: z.array(tripDaySchema) })
-export type PutPlanResponse = z.infer<typeof putPlanResponseSchema>
+export const putPlanResponseSchema = z.object({ days: z.array(tripDaySchema) });
+export type PutPlanResponse = z.infer<typeof putPlanResponseSchema>;
 
 /* ── PUT /trips/:id/selections/:kind · PATCH …/booked ──────────────────── */
 
 export const selectionParamsSchema = z.object({
   id: z.uuid(),
   kind: selectionKindSchema,
-})
-export type SelectionParams = z.infer<typeof selectionParamsSchema>
+});
+export type SelectionParams = z.infer<typeof selectionParamsSchema>;
 
 /**
  * The chosen offer, snapshotted as shown. `kind` comes from the path, not the
@@ -123,15 +147,21 @@ export type SelectionParams = z.infer<typeof selectionParamsSchema>
  */
 export const putSelectionRequestSchema = z.strictObject(
   tripSelectionSchema.omit({ kind: true, bookedAt: true }).shape,
-)
-export type PutSelectionRequest = z.infer<typeof putSelectionRequestSchema>
+);
+export type PutSelectionRequest = z.infer<typeof putSelectionRequestSchema>;
 
-export const putSelectionResponseSchema = tripSelectionSchema
-export type PutSelectionResponse = z.infer<typeof putSelectionResponseSchema>
+export const putSelectionResponseSchema = tripSelectionSchema;
+export type PutSelectionResponse = z.infer<typeof putSelectionResponseSchema>;
 
 /** The traveler ticking a row as booked on the partner site, or unticking it. */
-export const patchSelectionBookedRequestSchema = z.strictObject({ booked: z.boolean() })
-export type PatchSelectionBookedRequest = z.infer<typeof patchSelectionBookedRequestSchema>
+export const patchSelectionBookedRequestSchema = z.strictObject({
+  booked: z.boolean(),
+});
+export type PatchSelectionBookedRequest = z.infer<
+  typeof patchSelectionBookedRequestSchema
+>;
 
-export const patchSelectionBookedResponseSchema = tripSelectionSchema
-export type PatchSelectionBookedResponse = z.infer<typeof patchSelectionBookedResponseSchema>
+export const patchSelectionBookedResponseSchema = tripSelectionSchema;
+export type PatchSelectionBookedResponse = z.infer<
+  typeof patchSelectionBookedResponseSchema
+>;

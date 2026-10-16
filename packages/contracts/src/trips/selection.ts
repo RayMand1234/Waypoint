@@ -1,14 +1,28 @@
-import { z } from 'zod'
+import { z } from 'zod';
 import {
   isoDateTimeSchema,
   jsonObjectSchema,
   moneySchema,
   providerIdSchema,
-} from '../common/index.ts'
+} from '../common/index.ts';
+import { flightOfferSchema } from '../flights/flight.ts';
+import { hotelOfferSchema } from '../hotels/hotel.ts';
 
 /** The parts of a trip a traveler books, one selection each. */
-export const selectionKindSchema = z.enum(['flight', 'stay', 'ticket'])
-export type SelectionKind = z.infer<typeof selectionKindSchema>
+export const selectionKindSchema = z.enum(['flight', 'stay', 'ticket']);
+export type SelectionKind = z.infer<typeof selectionKindSchema>;
+
+/**
+ * What a selection's snapshot must be, per kind — checked when it is saved.
+ * Saved snapshots are read back loosely (`jsonObjectSchema`): each keeps the
+ * shape the app showed then, even after the offer schemas grow.
+ */
+export const offerSnapshotSchemas = {
+  flight: flightOfferSchema,
+  stay: hotelOfferSchema,
+  // Tickets have no offer contract yet.
+  ticket: jsonObjectSchema,
+} as const satisfies Record<SelectionKind, z.ZodType>;
 
 /**
  * The offer the traveler chose, snapshotted exactly as the app showed it, so the
@@ -25,5 +39,5 @@ export const tripSelectionSchema = z.object({
   price: moneySchema,
   checkedAt: isoDateTimeSchema,
   bookedAt: isoDateTimeSchema.nullable(),
-})
-export type TripSelection = z.infer<typeof tripSelectionSchema>
+});
+export type TripSelection = z.infer<typeof tripSelectionSchema>;

@@ -1,12 +1,9 @@
-import { z } from 'zod'
-import { isoDateTimeSchema } from '../common/index.ts'
-
-/** A home airport as a 3-letter IATA code, e.g. `TLV`. Branded: only a parsed value is one. */
-export const iataCodeSchema = z
-  .string()
-  .regex(/^[A-Z]{3}$/, 'expected a 3-letter IATA code')
-  .brand<'IataCode'>()
-export type IataCode = z.infer<typeof iataCodeSchema>
+import { z } from 'zod';
+import {
+  currencySchema,
+  iataCodeSchema,
+  isoDateTimeSchema,
+} from '../common/index.ts';
 
 /**
  * Waypoint's own record of a traveler, keyed by the Supabase user id
@@ -18,6 +15,8 @@ export const profileSchema = z.object({
   userId: z.uuid(),
   name: z.string().min(1).nullable(),
   homeAirport: iataCodeSchema.nullable(),
+  /** Every price is searched and shown in this currency. */
+  currency: currencySchema,
   createdAt: isoDateTimeSchema,
-})
-export type Profile = z.infer<typeof profileSchema>
+});
+export type Profile = z.infer<typeof profileSchema>;

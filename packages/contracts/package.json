@@ -6,7 +6,11 @@
   "exports": {
     ".": "./src/index.ts",
     "./common": "./src/common/index.ts",
-    "./trips": "./src/trips/index.ts"
+    "./trips": "./src/trips/index.ts",
+    "./geo": "./src/geo/index.ts",
+    "./hotels": "./src/hotels/index.ts",
+    "./flights": "./src/flights/index.ts",
+    "./destinations": "./src/destinations/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -5,72 +5,78 @@
 // because the services land one track at a time (docs/build-plan.md) and a
 // missing workspace must not break `npm run dev` for the ones that exist.
 
-import { spawn } from 'node:child_process'
-import { connect } from 'node:net'
-import { readdir, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { spawn } from 'node:child_process';
+import { connect } from 'node:net';
+import { readdir, readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // fileURLToPath, not `.pathname`: a checkout path with a space or non-ASCII
 // character comes back percent-encoded from `.pathname`, which then fails
 // `readdir` silently (see the catch below) instead of finding the services.
-const SERVICES_DIR = fileURLToPath(new URL('../services/', import.meta.url))
-const SUPABASE_HOST = '127.0.0.1'
-const SUPABASE_PORT = 54321
-const SUPABASE_PROBE_TIMEOUT_MS = 1_000
+const SERVICES_DIR = fileURLToPath(new URL('../services/', import.meta.url));
+const SUPABASE_HOST = '127.0.0.1';
+const SUPABASE_PORT = 54321;
+const SUPABASE_PROBE_TIMEOUT_MS = 1_000;
 
-const COLORS = ['cyan', 'magenta', 'yellow', 'green', 'blue']
+const COLORS = ['cyan', 'magenta', 'yellow', 'green', 'blue'];
 
 const isPortOpen = (host, port, timeoutMs) =>
   new Promise((resolve) => {
-    const socket = connect({ host, port })
+    const socket = connect({ host, port });
     const settle = (open) => {
-      socket.destroy()
-      resolve(open)
-    }
-    socket.setTimeout(timeoutMs)
-    socket.once('connect', () => settle(true))
-    socket.once('timeout', () => settle(false))
-    socket.once('error', () => settle(false))
-  })
+      socket.destroy();
+      resolve(open);
+    };
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => settle(true));
+    socket.once('timeout', () => settle(false));
+    socket.once('error', () => settle(false));
+  });
 
 const hasDevScript = async (dir) => {
   try {
-    const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
-    return typeof pkg.scripts?.dev === 'string'
+    const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
+    return typeof pkg.scripts?.dev === 'string';
   } catch {
-    return false
+    return false;
   }
-}
+};
 
 const findRunnableServices = async () => {
-  let entries
+  let entries;
   try {
-    entries = await readdir(SERVICES_DIR, { withFileTypes: true })
+    entries = await readdir(SERVICES_DIR, { withFileTypes: true });
   } catch {
-    return []
+    return [];
   }
-  const names = entries.filter((e) => e.isDirectory()).map((e) => e.name)
+  const names = entries.filter((e) => e.isDirectory()).map((e) => e.name);
   const runnable = await Promise.all(
-    names.map(async (name) => ((await hasDevScript(join(SERVICES_DIR, name))) ? name : null)),
-  )
-  return runnable.filter((name) => name !== null).sort()
-}
+    names.map(async (name) =>
+      (await hasDevScript(join(SERVICES_DIR, name))) ? name : null,
+    ),
+  );
+  return runnable.filter((name) => name !== null).sort();
+};
 
 const main = async () => {
-  if (!(await isPortOpen(SUPABASE_HOST, SUPABASE_PORT, SUPABASE_PROBE_TIMEOUT_MS))) {
+  if (
+    !(await isPortOpen(SUPABASE_HOST, SUPABASE_PORT, SUPABASE_PROBE_TIMEOUT_MS))
+  ) {
     console.warn(
       `Local Supabase is not answering on ${SUPABASE_HOST}:${SUPABASE_PORT}.\n` +
         'Start it with `npx supabase start` (Docker must be running), then run `npm run dev` again.',
-    )
-    process.exitCode = 1
-    return
+    );
+    process.exitCode = 1;
+    return;
   }
 
-  const services = await findRunnableServices()
+  const services = await findRunnableServices();
   if (services.length === 0) {
-    console.warn('No service in services/* has a dev script yet — nothing to run.')
-    return
+    console.warn(
+      'No service in services/* has a dev script yet — nothing to run.',
+    );
+    return;
   }
 
   const args = [
@@ -80,12 +86,12 @@ const main = async () => {
     '--prefix-colors',
     services.map((_, i) => COLORS[i % COLORS.length]).join(','),
     ...services.map((name) => `npm run dev -w services/${name}`),
-  ]
+  ];
 
-  const child = spawn('npx', ['concurrently', ...args], { stdio: 'inherit' })
+  const child = spawn('npx', ['concurrently', ...args], { stdio: 'inherit' });
   child.on('exit', (code) => {
-    process.exitCode = code ?? 1
-  })
-}
+    process.exitCode = code ?? 1;
+  });
+};
 
-await main()
+await main();
