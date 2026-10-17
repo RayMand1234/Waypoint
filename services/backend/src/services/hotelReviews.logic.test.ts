@@ -1,7 +1,11 @@
 import { isoDateTimeSchema } from '@waypoint/contracts/common';
 import { describe, expect, it } from 'vitest';
 import type { ProviderHotelReviews } from '../providers/types.ts';
-import { toHotelReviews } from './hotelReviews.logic.ts';
+import {
+  averageScore,
+  needsRating,
+  toHotelReviews,
+} from './hotelReviews.logic.ts';
 
 const review = (
   score: number,
@@ -82,5 +86,23 @@ describe('toHotelReviews', () => {
 
     expect(picked.best.map((r) => r.name)).toEqual(['Guest 4']);
     expect(picked.best[0]).not.toHaveProperty('language');
+  });
+});
+
+describe('review averages', () => {
+  it('averages every review read, to one decimal', () => {
+    expect(averageScore([{ score: 10 }, { score: 7 }, { score: 8 }])).toBe(8.3);
+    expect(averageScore([])).toBeNull();
+    expect(
+      toHotelReviews(source([review(9, 1, { language: 'de' }), review(6, 2)]))
+        .averageScore,
+    ).toBe(7.5);
+  });
+
+  it('only fills in a score for a hotel that has reviews but no rating', () => {
+    expect(needsRating({ rating: null, reviewCount: 5167 })).toBe(true);
+    expect(needsRating({ rating: 9.6, reviewCount: 4557 })).toBe(false);
+    expect(needsRating({ rating: null, reviewCount: 0 })).toBe(false);
+    expect(needsRating({ rating: null, reviewCount: null })).toBe(false);
   });
 });

@@ -1,4 +1,8 @@
-import type { HotelReview, HotelReviews } from '@waypoint/contracts/hotels';
+import type {
+  HotelReview,
+  HotelReviews,
+  HotelSummary,
+} from '@waypoint/contracts/hotels';
 import type { ProviderHotelReviews } from '../providers/types.ts';
 
 /** How many reviews the details sheet shows from each end. */
@@ -21,6 +25,25 @@ const highestFirst = (a: SourceReview, b: SourceReview): number =>
 /** Lowest score first; the newer of two equal scores first. */
 const lowestFirst = (a: SourceReview, b: SourceReview): number =>
   a.score - b.score || b.date.localeCompare(a.date);
+
+const SCORE_DECIMALS = 10;
+
+/** The reviews' average score, to one decimal; `null` without any. */
+export const averageScore = (
+  reviews: readonly Pick<HotelReview, 'score'>[],
+): number | null =>
+  reviews.length === 0
+    ? null
+    : Math.round(
+        (reviews.reduce((sum, review) => sum + review.score, 0) /
+          reviews.length) *
+          SCORE_DECIMALS,
+      ) / SCORE_DECIMALS;
+
+/** A hotel the source has no score for, though guests have reviewed it. */
+export const needsRating = (
+  hotel: Pick<HotelSummary, 'rating' | 'reviewCount'>,
+): boolean => hotel.rating === null && (hotel.reviewCount ?? 0) > 0;
 
 const withoutLanguage = ({
   language: _language,
@@ -48,6 +71,7 @@ export const toHotelReviews = (
 
   return {
     total: source.total,
+    averageScore: averageScore(source.reviews),
     likes: [...source.likes],
     dislikes: [...source.dislikes],
     best: best.map(withoutLanguage),

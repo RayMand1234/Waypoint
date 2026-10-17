@@ -158,6 +158,8 @@ export type HotelReview = z.infer<typeof hotelReviewSchema>;
  */
 export const hotelReviewsSchema = z.object({
   total: z.number().int().min(0),
+  /** The average score of the latest reviews read (up to 1,000), out of 10; `null` without any. */
+  averageScore: z.number().min(0).max(10).nullable(),
   likes: z.array(z.string().min(1)),
   dislikes: z.array(z.string().min(1)),
   /** Highest score first. */

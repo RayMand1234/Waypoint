@@ -264,4 +264,24 @@ describe('liteAPI hotel catalog', () => {
       },
     });
   });
+
+  it('reads a 0 rating as no rating — liteAPI sends 0 for hotels it hasn’t rated', async () => {
+    const { catalog } = setup(() => ({
+      body: {
+        data: {
+          id: 'lp466fa',
+          name: 'Hotel Trianon Rive Gauche',
+          location: { latitude: 48.84, longitude: 2.34 },
+          rating: 0,
+          reviewCount: 5167,
+          starRating: 4,
+        },
+      },
+    }));
+
+    expect(await catalog.hotel('lp466fa')).toMatchObject({
+      ok: true,
+      value: { rating: null, reviewCount: 5167, stars: 4 },
+    });
+  });
 });

@@ -128,7 +128,9 @@ const toSummary = (raw: z.output<typeof rawHotel>): HotelSummary => ({
   lat: raw.latitude,
   lng: raw.longitude,
   stars: inRange(raw.stars, 5),
-  rating: inRange(raw.rating, 10),
+  // liteAPI sends 0 for a hotel it hasn't rated (even one with thousands of
+  // reviews); no real guest score is 0 out of 10, so it reads as no rating.
+  rating: raw.rating === 0 ? null : inRange(raw.rating, 10),
   reviewCount: raw.reviewCount ?? null,
   mainPhotoUrl: webUrl(raw.main_photo),
   thumbnailUrl: webUrl(raw.thumbnail),
