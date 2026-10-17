@@ -36,6 +36,8 @@ export type { IataCode } from './iataCode.ts';
 export { jsonObjectSchema } from './json.ts';
 export type { JsonObject } from './json.ts';
 export { currencySchema, moneySchema } from './money.ts';
+export { photoSchema } from './photo.ts';
+export type { Photo } from './photo.ts';
 export type { Currency, Money } from './money.ts';
 export {
   offerSourceSchema,

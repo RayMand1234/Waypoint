@@ -1,4 +1,4 @@
-import { Pressable } from 'react-native';
+import { View } from 'react-native';
 import Animated, { type AnimatedStyle } from 'react-native-reanimated';
 import { StyleSheet } from 'react-native-unistyles';
 import type { ViewStyle } from 'react-native';
@@ -16,17 +16,15 @@ type RouteLabelsProps = {
   /** What the traveler picked at each passed checkpoint, in order. */
   readonly picks: readonly string[];
   readonly nowStyle: AnimatedStyle<ViewStyle>;
-  readonly onCheckpointPress?: (step: number) => void;
 };
 
-/** The picks under passed checkpoints (tappable to go back) and the step name above the current one. */
+/** The picks under passed checkpoints and the step name above the current one; the checkpoints themselves take you back. */
 export const RouteLabels = ({
   points,
   step,
   stepName,
   picks,
   nowStyle,
-  onCheckpointPress,
 }: RouteLabelsProps) => {
   const current = points[step - 1];
 
@@ -38,12 +36,9 @@ export const RouteLabels = ({
         if (point === undefined) return null;
 
         return (
-          <Pressable
+          <View
             key={index}
-            accessibilityRole="button"
-            accessibilityLabel={`Back to step ${String(index + 1)}: ${pick}`}
-            disabled={onCheckpointPress === undefined}
-            onPress={() => onCheckpointPress?.(index + 1)}
+            pointerEvents="none"
             style={styles.pick(
               index === 0 ? FIRST_LABEL_LEFT : point.x,
               index === 0,
@@ -57,7 +52,7 @@ export const RouteLabels = ({
             >
               {pick}
             </Text>
-          </Pressable>
+          </View>
         );
       })}
       {current !== undefined && (

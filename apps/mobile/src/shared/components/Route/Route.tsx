@@ -3,6 +3,7 @@ import { View, type LayoutChangeEvent } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { useRouteMotion } from '../../hooks/useRouteMotion';
 import { checkpoints, roadLength, roadPath } from '../../utils/routeGeometry';
+import { RouteCheckpoints } from './RouteCheckpoints';
 import { RouteLabels } from './RouteLabels';
 import { RouteMarker } from './RouteMarker';
 import { RouteRoad } from './RouteRoad';
@@ -16,7 +17,7 @@ export type RouteProps = {
   readonly stepName: string;
   /** One or two words per passed step: "Views +2", "Lisbon", "5 days". */
   readonly picks: readonly string[];
-  /** Jump back to a passed step. */
+  /** Jump back to a passed step; its checkpoint becomes a button. */
   readonly onCheckpointPress?: (step: number) => void;
 };
 
@@ -63,8 +64,15 @@ export const Route = ({
         stepName={stepName}
         picks={picks}
         nowStyle={motion.nowStyle}
-        {...(onCheckpointPress === undefined ? {} : { onCheckpointPress })}
       />
+      {onCheckpointPress !== undefined && (
+        <RouteCheckpoints
+          points={points}
+          step={step}
+          picks={picks}
+          onPress={onCheckpointPress}
+        />
+      )}
     </View>
   );
 };

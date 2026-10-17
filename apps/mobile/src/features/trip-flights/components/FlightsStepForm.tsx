@@ -38,6 +38,7 @@ export const FlightsStepForm = ({
       question="Choose your flight"
       {...(hint === undefined ? {} : { hint })}
       onBack={step.navigation.back}
+      onCheckpointPress={step.navigation.jumpBack}
       onClose={step.navigation.close}
       footer={
         <StepFooter
@@ -48,7 +49,7 @@ export const FlightsStepForm = ({
               : formatMoney(pick.picked.bestPrice)
           }
           action={{
-            label: 'Plan my days',
+            label: 'Find a stay',
             onPress: step.choose,
             isDisabled: !step.canChoose,
             isLoading: step.isSaving,

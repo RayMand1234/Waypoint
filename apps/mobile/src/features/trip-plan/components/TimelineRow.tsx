@@ -1,25 +1,81 @@
-import { ArrowLeftRight } from 'lucide-react-native';
+import { ArrowLeftRight, GripVertical } from 'lucide-react-native';
+import type { ReactElement } from 'react';
 import { Pressable, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Text } from '@/shared/components';
 import type { TimelineItem } from '../utils/planModel';
 
+const MOVE_ACTIONS = [
+  { name: 'earlier', label: 'Move earlier' },
+  { name: 'later', label: 'Move later' },
+];
+
 /**
  * One stop on the day's line: how you get there, the time, a dot, and its
- * card. Spots are solid with a yellow dot and can be edited; the fixed moments
- * around them (landing, lunch, the airport) are dashed.
+ * card. Spots are solid with a yellow dot and can be edited; the moments
+ * around them (landing, lunch, the airport) are dashed. Spots and lunch carry
+ * a grip: their card is held to drag it (`renderCard` wraps it for that).
  */
 export const TimelineRow = ({
   item,
+  isDraggable,
+  renderCard,
   onEdit,
+  onNudge,
 }: {
   readonly item: TimelineItem;
+  readonly isDraggable: boolean;
+  readonly renderCard?: (card: ReactElement) => ReactElement;
   readonly onEdit: (spotId: string) => void;
+  /** Moves the stop one place earlier (-1) or later (1): the drag, for screen readers. */
+  readonly onNudge?: (by: -1 | 1) => void;
 }) => {
   const { theme } = useUnistyles();
   const { spotId } = item;
 
   styles.useVariants({ isSpot: item.isSpot });
+
+  const card = (
+    <View style={styles.card}>
+      {isDraggable && (
+        <GripVertical
+          size={theme.size['icon-sm']}
+          strokeWidth={theme.size['icon-stroke']}
+          color={theme.colors['ink-muted']}
+        />
+      )}
+      <View style={styles.text}>
+        <Text variant="body-strong">{item.name}</Text>
+        <Text variant="caption" color="ink-muted">
+          {item.meta}
+        </Text>
+      </View>
+      {spotId !== null && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Move or remove ${item.name}`}
+          {...(onNudge === undefined
+            ? {}
+            : {
+                accessibilityActions: MOVE_ACTIONS,
+                onAccessibilityAction: ({ nativeEvent }) => {
+                  onNudge(nativeEvent.actionName === 'earlier' ? -1 : 1);
+                },
+              })}
+          onPress={() => {
+            onEdit(spotId);
+          }}
+          style={styles.edit}
+        >
+          <ArrowLeftRight
+            size={theme.size['icon-sm']}
+            strokeWidth={theme.size['icon-stroke']}
+            color={theme.colors['ink-muted']}
+          />
+        </Pressable>
+      )}
+    </View>
+  );
 
   return (
     <View>
@@ -41,30 +97,7 @@ export const TimelineRow = ({
           </Text>
         </View>
         <View style={styles.dot} />
-        <View style={styles.card}>
-          <View style={styles.text}>
-            <Text variant="body-strong">{item.name}</Text>
-            <Text variant="caption" color="ink-muted">
-              {item.meta}
-            </Text>
-          </View>
-          {spotId !== null && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Move or remove ${item.name}`}
-              onPress={() => {
-                onEdit(spotId);
-              }}
-              style={styles.edit}
-            >
-              <ArrowLeftRight
-                size={theme.size['icon-sm']}
-                strokeWidth={theme.size['icon-stroke']}
-                color={theme.colors['ink-muted']}
-              />
-            </Pressable>
-          )}
-        </View>
+        {renderCard === undefined ? card : renderCard(card)}
       </View>
     </View>
   );
@@ -116,7 +149,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'center',
     gap: theme.space[2],
     paddingVertical: theme.space[2],
-    paddingLeft: theme.space[3],
+    paddingLeft: theme.space[2],
     paddingRight: theme.space[2],
     borderRadius: theme.radius.md,
     borderWidth: theme.size.hairline,

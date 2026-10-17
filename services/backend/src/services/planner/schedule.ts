@@ -5,9 +5,9 @@ import type { DayFrame, PlanSpot } from './types.ts';
 
 // Lays one day's spots, in order, on the clock: travel from the stay (or the
 // last spot), wait for the doors to open, visit, and break for lunch around
-// midday. Strictly, a day that runs over its budget or end, or reaches a
-// closed spot, doesn't fit; loosely (a traveler's own edit) everything is
-// placed and only waits for opening are kept.
+// midday — or where the traveler put it. Strictly, a day that runs over its
+// budget or end, or reaches a closed spot, doesn't fit; loosely (a traveler's
+// own edit) everything is placed and only waits for opening are kept.
 
 /** Lunch fits between noon and 14:30, for an hour. */
 const LUNCH_EARLIEST = at(12);
@@ -83,14 +83,23 @@ const lunchNow = (state: Running, nextArrive: number): boolean =>
 
 /**
  * The day's schedule for these spots in this order; `undefined` when, strictly,
- * they don't fit (over budget, past the day's end, or a spot closed).
+ * they don't fit (over budget, past the day's end, or a spot closed). With
+ * `lunchAfter`, lunch follows that many visits (not before noon) instead of
+ * falling around midday.
  */
 export const scheduleDay = (
   frame: DayFrame,
   home: LatLng,
   spots: readonly PlanSpot[],
-  { strict }: { readonly strict: boolean },
+  {
+    strict,
+    lunchAfter,
+  }: { readonly strict: boolean; readonly lunchAfter?: number | undefined },
 ): DaySchedule | undefined => {
+  const lunchHere = (state: Running, visit: number, arrive: number): boolean =>
+    lunchAfter === undefined
+      ? frame.start < LUNCH_DUE && lunchNow(state, arrive)
+      : visit === lunchAfter;
   const initial: Running = {
     visits: [],
     lunchAt: null,
@@ -100,12 +109,11 @@ export const scheduleDay = (
     clock: frame.start,
     place: home,
   };
-  const final = spots.reduce<Running | undefined>((state, spot) => {
+  const final = spots.reduce<Running | undefined>((state, spot, visit) => {
     if (state === undefined) return undefined;
 
     const travel = travelLeg(state.place, spot);
-    const takesLunch =
-      frame.start < LUNCH_DUE && lunchNow(state, state.clock + travel.minutes);
+    const takesLunch = lunchHere(state, visit, state.clock + travel.minutes);
     const lunchAt = takesLunch
       ? Math.max(state.clock, LUNCH_EARLIEST)
       : state.lunchAt;
@@ -135,18 +143,21 @@ export const scheduleDay = (
 
   if (final === undefined) return undefined;
 
-  // Done by early afternoon without a break: lunch after the last visit.
-  const lunchAfter =
-    final.lunchAt === null &&
-    final.visits.length > 0 &&
-    final.clock >= LUNCH_EARLIEST &&
-    final.clock < LUNCH_LATEST
-      ? final.clock
-      : final.lunchAt;
+  // Lunch after the last visit: where the traveler put it, or when the day
+  // is done by early afternoon without a break.
+  const lastLunch =
+    lunchAfter === undefined
+      ? final.lunchAt === null &&
+        final.visits.length > 0 &&
+        final.clock >= LUNCH_EARLIEST &&
+        final.clock < LUNCH_LATEST
+        ? final.clock
+        : final.lunchAt
+      : (final.lunchAt ?? Math.max(final.clock, LUNCH_EARLIEST));
 
   return {
     visits: final.visits,
-    lunchAt: lunchAfter,
+    lunchAt: lastLunch,
     travelMinutes: final.travelMinutes,
     waitMinutes: final.waitMinutes,
     usedMinutes: final.usedMinutes,

@@ -2,7 +2,7 @@ import {
   tripListItemSchema,
   type TripListItem,
 } from '@waypoint/contracts/trips';
-import { toTripCard } from './tripCardModel';
+import { splitTrips, toTripCard } from './tripCardModel';
 
 const trip = (overrides: Record<string, unknown> = {}): TripListItem =>
   tripListItemSchema.parse({
@@ -20,6 +20,7 @@ const trip = (overrides: Record<string, unknown> = {}): TripListItem =>
     updatedAt: '2027-04-01T10:00:00.000Z',
     planDays: 0,
     selections: [],
+    destinationPhoto: null,
     ...overrides,
   });
 
@@ -30,10 +31,10 @@ describe('toTripCard', () => {
       code: 'LIS',
       tone: 'draft',
       line: '12–16 May · 2 travelers',
-      status: { kind: 'badge', badge: { kind: 'neutral', label: 'Draft' } },
+      pill: 'Draft',
       progress: 3,
-      action: { text: 'Continue · Stay', isLink: true },
-      target: { kind: 'step', step: 'stay' },
+      action: { text: 'Continue · Flights', isLink: true },
+      target: { kind: 'step', step: 'flights' },
     });
   });
 
@@ -64,7 +65,7 @@ describe('toTripCard', () => {
       ),
     ).toMatchObject({
       tone: 'ready',
-      status: { kind: 'badge', badge: { kind: 'savings', label: 'Booked' } },
+      pill: 'Booked',
       action: { text: 'Flight, stay and 4-day plan ready', isLink: false },
       progress: null,
     });
@@ -78,9 +79,25 @@ describe('toTripCard', () => {
   it('offers to plan a past trip again', () => {
     expect(toTripCard(trip({ status: 'past' }))).toMatchObject({
       tone: 'past',
-      status: { kind: 'text', text: 'Past' },
+      pill: 'Past',
       action: { text: 'Plan it again', isLink: true },
       target: { kind: 'plan-again' },
     });
+  });
+
+  it('reads the whole postcard to a screen reader', () => {
+    expect(toTripCard(trip()).label).toBe(
+      'Lisbon, 12–16 May · 2 travelers, draft, 3 of 6 steps. Continue · Flights.',
+    );
+  });
+
+  it('keeps past trips out of the rail, for the stamps', () => {
+    const { upcoming, past } = splitTrips([
+      trip({ id: '00000000-0000-4000-8000-000000000001' }),
+      trip({ id: '00000000-0000-4000-8000-000000000002', status: 'past' }),
+    ]);
+
+    expect(upcoming.map((t) => t.status)).toEqual(['draft']);
+    expect(past.map((t) => t.status)).toEqual(['past']);
   });
 });

@@ -35,6 +35,7 @@ export const StayStepForm = ({
       question="Where to sleep"
       {...(hint === undefined ? {} : { hint })}
       onBack={step.navigation.back}
+      onCheckpointPress={step.navigation.jumpBack}
       onClose={step.navigation.close}
       footer={
         <StepFooter
@@ -45,7 +46,7 @@ export const StayStepForm = ({
               : formatMoney(pick.picked.bestPrice)
           }
           action={{
-            label: 'Find flights',
+            label: 'Plan my days',
             onPress: step.choose,
             isDisabled: !step.canChoose,
             isLoading: step.isSaving,

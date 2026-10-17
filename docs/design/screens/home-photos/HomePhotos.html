@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waypoint home: photo concept</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --midnight-900: #1E2A5A;
+    --midnight-700: #33437F;
+    --midnight-100: #E7EAF5;
+    --sunshine-400: #FFC83D;
+    --sunshine-100: #FFF3D1;
+    --surface: #FAF8F4;
+    --border: #E6E1D8;
+    --ink: #121726;
+    --ink-muted: #5E5A55;
+    --savings: #1D7A50;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    gap: 48px;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 40px 24px;
+    background: #E9E6E0;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    color: var(--ink);
+  }
+  .col { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .caption { font-size: 13px; color: var(--ink-muted); }
+
+  .phone {
+    width: 390px;
+    border-radius: 48px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 0 0 10px #121726, 0 30px 60px rgba(18,23,38,.25);
+    position: relative;
+  }
+  .phone.viewport { height: 844px; }
+
+  /* Hero: a destination photo, washed in midnight so the brand colour stays in charge. */
+  .hero {
+    position: relative;
+    height: 420px;
+    padding: 64px 24px 0;
+    color: #fff;
+    background:
+      linear-gradient(180deg, rgba(30,42,90,.55) 0%, rgba(30,42,90,.25) 40%, rgba(30,42,90,.92) 100%),
+      url(img/santorini.jpg) center 30% / cover;
+  }
+  .topbar { display: flex; justify-content: space-between; align-items: center; }
+  .hello { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.85); }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.35);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px;
+  }
+  .headline {
+    margin-top: 60px;
+    font-size: 38px; line-height: 42px; font-weight: 800; letter-spacing: -1px;
+  }
+  .headline em { font-style: normal; color: var(--sunshine-400); }
+  .photo-credit {
+    position: absolute; right: 24px; top: 278px;
+    font-size: 11px; color: rgba(255,255,255,.75);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .cta {
+    margin-top: 20px;
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 48px; padding: 0 20px;
+    border-radius: 14px;
+    background: var(--sunshine-400); color: var(--ink);
+    font-weight: 700; font-size: 15px;
+  }
+
+  /* Your trips: postcards that overlap the hero and scroll sideways. */
+  .section-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 0 24px;
+  }
+  .section-head h2 { font-size: 20px; font-weight: 700; letter-spacing: -.2px; }
+  .section-head span { font-size: 13px; font-weight: 600; color: var(--midnight-900); }
+  .trips-head { margin-top: -78px; position: relative; color: #fff; }
+  .trips-head h2 { color: #fff; }
+  .trips-head span { color: rgba(255,255,255,.85); }
+
+  .rail {
+    display: flex; gap: 14px;
+    padding: 14px 24px 36px; /* room for the card shadows: a scrolling row clips anything outside it */
+    overflow-x: auto; scrollbar-width: none;
+    position: relative;
+  }
+  .postcard {
+    flex: 0 0 236px; height: 300px;
+    border-radius: 24px;
+    position: relative; overflow: hidden;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(18,23,38,.22);
+    background-size: cover; background-position: center;
+  }
+  .postcard::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(18,23,38,0) 35%, rgba(18,23,38,.85) 100%);
+  }
+  .postcard > * { position: relative; z-index: 1; }
+  .pill {
+    position: absolute; top: 14px; left: 14px;
+    font-size: 11px; font-weight: 700; letter-spacing: .6px;
+    padding: 5px 10px; border-radius: 999px;
+    background: var(--sunshine-400); color: var(--ink);
+  }
+  .pill.ready { background: #fff; color: var(--midnight-900); }
+  .code {
+    position: absolute; top: 10px; right: 14px;
+    font-size: 13px; font-weight: 800; letter-spacing: 1px;
+    color: rgba(255,255,255,.9);
+  }
+  .card-body { position: absolute; left: 18px; right: 18px; bottom: 18px; }
+  .city { font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  .meta { font-size: 13px; color: rgba(255,255,255,.85); margin-top: 2px; }
+  .segments { display: flex; gap: 4px; margin-top: 12px; }
+  .segments i { flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,.3); }
+  .segments i.on { background: var(--sunshine-400); }
+  .next { margin-top: 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+
+  .new-card {
+    flex: 0 0 150px; height: 300px; border-radius: 24px;
+    border: 2px dashed #B9B2A6; background: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    color: var(--midnight-900); font-weight: 700; font-size: 14px; text-align: center;
+  }
+  .new-card .plus {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--midnight-900); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 400;
+  }
+
+  /* Inspiration: a bento grid of places, priced, to make you want to go. */
+  .inspo { margin-top: 0; }
+  .inspo .sub { padding: 2px 24px 0; font-size: 13px; color: var(--ink-muted); }
+  .bento {
+    display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 160px; gap: 12px;
+    padding: 14px 24px 0;
+  }
+  .tile {
+    border-radius: 22px; position: relative; overflow: hidden; color: #fff;
+    background-size: cover; background-position: center;
+  }
+  .tile::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(18,23,38,0) 40%, rgba(18,23,38,.78) 100%);
+  }
+  .tile > * { position: relative; z-index: 1; }
+  .tile.wide { grid-column: span 2; }
+  .tile.tall { grid-row: span 2; }
+  .tile .t-body { position: absolute; left: 14px; right: 14px; bottom: 12px; }
+  .tile .t-city { font-size: 18px; font-weight: 800; letter-spacing: -.3px; }
+  .tile.wide .t-city { font-size: 24px; }
+  .tile .t-meta { font-size: 12px; color: rgba(255,255,255,.85); }
+  .price {
+    position: absolute; top: 12px; right: 12px;
+    background: #fff; color: var(--ink);
+    border-radius: 999px; padding: 5px 10px;
+    font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .price.best { background: var(--sunshine-400); }
+  .style-tag {
+    position: absolute; top: 12px; left: 12px;
+    font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    padding: 5px 9px; border-radius: 999px;
+    background: rgba(18,23,38,.45); backdrop-filter: blur(6px);
+  }
+  .age { padding: 8px 24px 0; font-size: 11px; color: var(--ink-muted); }
+
+  /* Been there: small photo stamps. */
+  .been { margin-top: 30px; padding-bottom: 130px; }
+  .stamps { display: flex; gap: 16px; padding: 14px 24px 0; }
+  .stamp { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+  .stamp div {
+    width: 64px; height: 64px; border-radius: 50%;
+    background-size: cover; background-position: center;
+    box-shadow: 0 0 0 3px #fff, 0 0 0 4px var(--border);
+    filter: saturate(.75);
+  }
+  .stamp small { font-size: 11px; font-weight: 500; color: var(--ink-muted); margin-top: -4px; }
+
+  .tabbar {
+    position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+    display: flex; gap: 6px; padding: 6px;
+    border-radius: 999px; background: rgba(255,255,255,.92); backdrop-filter: blur(12px);
+    box-shadow: 0 6px 20px rgba(18,23,38,.15);
+  }
+  .tab { padding: 8px 18px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--ink-muted); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .tab.on { background: var(--midnight-100); color: var(--midnight-900); }
+  .tab svg { width: 22px; height: 22px; }
+
+  /* Below the hero: a faint dot grid over two soft glows (sunshine top-right, midnight-100 lower-left). */
+  .phone { isolation: isolate; }
+  .tex {
+    position: absolute; left: 0; right: 0; top: 420px; bottom: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(circle, rgba(140,133,122,.22) 1.3px, transparent 1.6px) 0 0 / 16px 16px,
+      radial-gradient(120% 420px at 85% 0%, #FFF3D1 0%, rgba(255,243,209,0) 70%),
+      radial-gradient(90% 520px at 0% 900px, #E7EAF5 0%, rgba(231,234,245,0) 70%);
+  }
+  .hero, .trips-head, .rail, .inspo, .been { position: relative; }
+
+  /* Lifted: tight contact shadow plus a long soft one. */
+  .postcard, .tile, .new-card {
+    box-shadow: 0 2px 4px rgba(18,23,38,.08), 0 14px 30px rgba(18,23,38,.20);
+  }
+  .stamp div {
+    box-shadow: 0 0 0 3px #fff, 0 2px 3px rgba(18,23,38,.10), 0 8px 18px rgba(18,23,38,.18) !important;
+  }
+</style>
+</head>
+<body>
+
+<template id="screen">
+  <div class="tex" aria-hidden="true"></div>
+  <section class="hero">
+    <div class="topbar">
+      <span class="hello">Good evening, Ray</span>
+      <span class="avatar">R</span>
+    </div>
+    <span class="photo-credit">Oia, Santorini</span>
+    <h1 class="headline">Where to<br><em>next?</em></h1>
+    <span class="cta">+ Start planning</span>
+  </section>
+
+  <div class="section-head trips-head">
+    <h2>Your waypoints</h2>
+    <span>2 in progress</span>
+  </div>
+  <div class="rail">
+    <article class="postcard" style="background-image:url(img/lisbon.jpg)">
+      <span class="pill">DRAFT</span>
+      <span class="code">LIS</span>
+      <div class="card-body">
+        <div class="city">Lisbon</div>
+        <div class="meta">16–20 Nov · 2 travelers</div>
+        <div class="segments"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+        <div class="next">Continue · Flights →</div>
+      </div>
+    </article>
+    <article class="postcard" style="background-image:url(img/barcelona.jpg)">
+      <span class="pill ready">READY TO BOOK</span>
+      <span class="code">BCN</span>
+      <div class="card-body">
+        <div class="city">Barcelona</div>
+        <div class="meta">15–19 Nov · 2 travelers</div>
+        <div class="segments"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <div class="next">See summary →</div>
+      </div>
+    </article>
+    <div class="new-card"><span class="plus">+</span>New<br>waypoint</div>
+  </div>
+
+  <section class="inspo">
+    <div class="section-head"><h2>Worth the trip this winter</h2><span>See all</span></div>
+    <p class="sub">Picked for your styles: views, food and culture</p>
+    <div class="bento">
+      <div class="tile wide" style="background-image:url(img/kyoto.jpg)">
+        <span class="style-tag">CULTURE</span>
+        <span class="price best">Best value · from €640</span>
+        <div class="t-body"><div class="t-city">Kyoto</div><div class="t-meta">5 days · flight + stay per person</div></div>
+      </div>
+      <div class="tile tall" style="background-image:url(img/amalfi.jpg)">
+        <span class="price">€410</span>
+        <div class="t-body"><div class="t-city">Amalfi Coast</div><div class="t-meta">Views · 4 days</div></div>
+      </div>
+      <div class="tile" style="background-image:url(img/reykjavik.jpg)">
+        <span class="price">€520</span>
+        <div class="t-body"><div class="t-city">Reykjavík</div><div class="t-meta">Northern lights</div></div>
+      </div>
+      <div class="tile" style="background-image:url(img/dubrovnik.jpg)">
+        <span class="price">€290</span>
+        <div class="t-body"><div class="t-city">Dubrovnik</div><div class="t-meta">Old town walls</div></div>
+      </div>
+    </div>
+    <p class="age">Estimated prices, checked 3h ago · final price confirmed on site</p>
+  </section>
+
+  <section class="been">
+    <div class="section-head"><h2>Been there</h2></div>
+    <div class="stamps">
+      <div class="stamp"><div style="background-image:url(img/paris.jpg)"></div>Paris<small>May 2026</small></div>
+      <div class="stamp"><div style="background-image:url(img/rome.jpg)"></div>Rome<small>Jan 2026</small></div>
+    </div>
+  </section>
+
+  <nav class="tabbar">
+    <span class="tab on"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/></svg>Waypoints</span>
+    <span class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Explore</span>
+    <span class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profile</span>
+  </nav>
+</template>
+
+<div class="col">
+  <div class="phone viewport" id="a"></div>
+  <span class="caption">First screen</span>
+</div>
+<div class="col">
+  <div class="phone" id="b"></div>
+  <span class="caption">Full page, scrolled</span>
+</div>
+
+<script>
+  const tpl = document.getElementById('screen');
+  for (const id of ['a', 'b']) {
+    document.getElementById(id).append(tpl.content.cloneNode(true));
+  }
+</script>
+</body>
+</html>

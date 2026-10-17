@@ -15,8 +15,8 @@ describe('currentStep', () => {
     expect(currentStep({ ...draft, styles: [] })).toBe('style');
     expect(currentStep({ ...draft, destinationId: null })).toBe('destination');
     expect(currentStep({ ...draft, endDate: null })).toBe('spots');
-    expect(currentStep({ ...draft, selections: [] })).toBe('stay');
-    expect(currentStep({ ...draft, selections: ['stay'] })).toBe('flights');
+    expect(currentStep({ ...draft, selections: [] })).toBe('flights');
+    expect(currentStep({ ...draft, selections: ['flight'] })).toBe('stay');
     expect(currentStep({ ...draft, planDays: 0 })).toBe('plan');
     expect(currentStep(draft)).toBe('summary');
   });
@@ -26,7 +26,8 @@ describe('step numbers', () => {
   it('counts the six planning steps', () => {
     expect(stepNumber('style')).toBe(1);
     expect(stepNumber('plan')).toBe(6);
-    expect(completedSteps('stay')).toBe(3);
+    expect(completedSteps('flights')).toBe(3);
+    expect(completedSteps('stay')).toBe(4);
     expect(completedSteps('summary')).toBe(6);
     expect(completedSteps('booked')).toBe(6);
   });

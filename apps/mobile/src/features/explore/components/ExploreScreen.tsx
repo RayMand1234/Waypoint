@@ -4,7 +4,7 @@ import { Screen, Text } from '@/shared/components';
 
 /** The Explore tab — a placeholder until destination ideas exist. */
 export const ExploreScreen = () => (
-  <Screen>
+  <Screen hasTabBar>
     <View style={styles.page}>
       <Text variant="title-lg" accessibilityRole="header">
         Explore

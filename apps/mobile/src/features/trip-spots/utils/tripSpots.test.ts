@@ -4,13 +4,8 @@ import { addDays, todayOf } from '@/shared/utils/dates';
 import { dayState, monthGrid, pickDay, shiftMonth } from './calendar';
 import { fitLabel, suggestedSpotIds } from './spotFit';
 import { formatDuration } from '@/shared/utils/format';
-import {
-  feeText,
-  formatHours,
-  googleMapsUrl,
-  photoCredit,
-  spotFacts,
-} from './spotDetails';
+import { photoCredit } from '@/shared/utils/photoUrl';
+import { feeText, formatHours, googleMapsUrl, spotFacts } from './spotDetails';
 import {
   cardPhotoUrl,
   spotMeta,

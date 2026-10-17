@@ -5,6 +5,7 @@ import {
   iataCodeSchema,
   isoDateSchema,
   MAX_CHILDREN,
+  photoSchema,
 } from '../common/index.ts';
 import { tripDayInputSchema, tripDaySchema } from './plan.ts';
 import { profileSchema } from './profile.ts';
@@ -65,6 +66,8 @@ export const tripListItemSchema = tripSchema.extend({
   planDays: z.number().int().min(0),
   /** Which parts have an offer chosen, e.g. `['flight']`. */
   selections: z.array(selectionKindSchema),
+  /** The destination's photo, for Home's postcards; `null` until a destination with a photo is picked. */
+  destinationPhoto: photoSchema.nullable(),
 });
 export type TripListItem = z.infer<typeof tripListItemSchema>;
 
@@ -136,9 +139,11 @@ export type PutPlanResponse = z.infer<typeof putPlanResponseSchema>;
 
 /**
  * Builds the day plan and saves it. Without `days` the planner groups the
- * trip's spots into days itself; with them it keeps each day's spots (an
- * edit: a spot removed or moved) and only orders and times them. Spots that
- * don't fit are left out — the trip's spots not in the plan.
+ * trip's spots into days itself; with them (an edit: spots reordered, removed
+ * or moved, lunch placed) it keeps each day's spots in the order given, and
+ * lunch where given, and only times them — a spot new to a day goes where it
+ * adds the least travel. Spots that don't
+ * fit are left out — the trip's spots not in the plan.
  */
 export const buildPlanRequestSchema = z.strictObject({
   days: z
@@ -146,6 +151,8 @@ export const buildPlanRequestSchema = z.strictObject({
       z.strictObject({
         date: isoDateSchema,
         spotIds: z.array(z.string().min(1)),
+        /** How many of `spotIds` come before lunch; omitted, the planner places lunch. */
+        lunchAfter: z.number().int().min(0).optional(),
       }),
     )
     .optional(),

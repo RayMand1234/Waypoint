@@ -1,6 +1,6 @@
 import type { TripDayInput, TripStopInput } from '@waypoint/contracts/trips';
 import type { LatLng } from '../../lib/distance.ts';
-import { assignSpots, orderDay } from './assign.ts';
+import { arrangeDay, assignSpots, type ArrangedDay } from './assign.ts';
 import { timeOf } from './clock.ts';
 import { LUNCH_MINUTES, scheduleDay, type DaySchedule } from './schedule.ts';
 import type { DayFrame, Moment, PlanSpot } from './types.ts';
@@ -98,15 +98,18 @@ const dayOf = (
 const toDays = (
   frames: readonly DayFrame[],
   home: LatLng,
-  routes: readonly (readonly PlanSpot[])[],
+  days: readonly ArrangedDay[],
   strict: boolean,
 ): TripDayInput[] =>
   frames.flatMap((frame, index) => {
-    const route = routes[index] ?? [];
+    const { route, lunchAfter } = days[index] ?? {
+      route: [],
+      lunchAfter: undefined,
+    };
     const schedule =
       route.length === 0
         ? undefined
-        : scheduleDay(frame, home, route, { strict });
+        : scheduleDay(frame, home, route, { strict, lunchAfter });
     const day = dayOf(frame, index, route, schedule);
 
     return day === undefined ? [] : [day];
@@ -127,25 +130,49 @@ export const buildPlan = (
   const { routes, dropped } = assignSpots(frames, home, spots);
 
   return {
-    days: toDays(frames, home, routes, true),
+    days: toDays(
+      frames,
+      home,
+      routes.map((route) => ({ route, lunchAfter: undefined })),
+      true,
+    ),
     droppedIds: dropped.map((spot) => spot.id),
   };
 };
 
+/** One day as the traveler arranged it. */
+export type DayArrangement = {
+  readonly spots: readonly PlanSpot[];
+  /** How many of `spots` come before lunch; `undefined` leaves lunch to the planner. */
+  readonly lunchAfter: number | undefined;
+};
+
 /**
- * A plan the traveler grouped by hand (spots removed or moved): each day keeps
- * its spots, ordered and timed; nothing is dropped, even past the budget.
+ * A plan the traveler arranged by hand (spots reordered, removed or moved,
+ * lunch placed): each day keeps its spots, their order and lunch's place, and
+ * is timed; a spot new to a day goes where it adds the least travel. Nothing
+ * is dropped, even past the budget.
  */
 export const arrangePlan = (
   frames: readonly DayFrame[],
   home: LatLng,
-  spotsByDate: ReadonlyMap<string, readonly PlanSpot[]>,
+  byDate: ReadonlyMap<string, DayArrangement>,
+  /** The spot ids each date had before the edit. */
+  previousByDate: ReadonlyMap<string, ReadonlySet<string>>,
 ): TripDayInput[] =>
   toDays(
     frames,
     home,
-    frames.map((frame) =>
-      orderDay(frame, home, spotsByDate.get(frame.date) ?? []),
-    ),
+    frames.map((frame) => {
+      const day = byDate.get(frame.date);
+
+      return arrangeDay(
+        frame,
+        home,
+        day?.spots ?? [],
+        previousByDate.get(frame.date) ?? new Set(),
+        day?.lunchAfter,
+      );
+    }),
     false,
   );

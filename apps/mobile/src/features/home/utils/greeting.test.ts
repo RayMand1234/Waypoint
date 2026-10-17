@@ -1,4 +1,4 @@
-import { greetingFor, hiLine, initialOf } from './greeting';
+import { greetingLine, greetingFor, hiLine, initialOf } from './greeting';
 
 describe('greeting', () => {
   it('follows the hour', () => {
@@ -17,5 +17,15 @@ describe('greeting', () => {
   it('takes the avatar letter from the name, then the email', () => {
     expect(initialOf('ray', 'x@y.z')).toBe('R');
     expect(initialOf(null, 'traveler@waypoint.local')).toBe('T');
+  });
+});
+
+describe('greetingLine', () => {
+  it('greets by first name, or without one', () => {
+    expect(greetingLine('Good evening', 'Ray Mandel')).toBe(
+      'Good evening, Ray',
+    );
+    expect(greetingLine('Good evening', null)).toBe('Good evening');
+    expect(greetingLine('Good evening', '  ')).toBe('Good evening');
   });
 });

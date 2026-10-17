@@ -27,7 +27,12 @@ const sampleTrip = tripSchema.parse({
   updatedAt: '2027-04-01T10:00:00.000Z',
 });
 
-const sampleListItem = { ...sampleTrip, planDays: 0, selections: [] };
+const sampleListItem = {
+  ...sampleTrip,
+  planDays: 0,
+  selections: [],
+  destinationPhoto: null,
+};
 
 const unused = () => Promise.reject(new Error('not used in this test'));
 

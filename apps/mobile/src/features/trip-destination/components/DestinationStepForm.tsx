@@ -48,6 +48,7 @@ export const DestinationStepForm = ({
       question="Where to?"
       hint={pickedFor(trip)}
       onBack={navigation.back}
+      onCheckpointPress={navigation.jumpBack}
       onClose={navigation.close}
       footer={
         <StepFooter

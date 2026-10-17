@@ -1,6 +1,6 @@
 # Waypoint
 
-Mobile-first app that plans a whole trip in under five minutes: trip style → destination → spots & dates → day-by-day plan → flights → stay → summary, always steering to the best quality for the money.
+Mobile-first app that plans a whole trip in under five minutes: trip style → destination → spots & dates → flights → stay → day-by-day plan → summary, always steering to the best quality for the money.
 
 **Architecture doc:** `docs/architecture.md` — system map, each service's routes and data, the user flow → backend calls, data model, failure handling, roadmap. Read it before adding a service, route or table, and update it in the same commit when one changes.
 

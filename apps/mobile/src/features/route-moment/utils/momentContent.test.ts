@@ -64,8 +64,9 @@ describe('momentLabels', () => {
     expect(labels[6]?.main).toBe('Book');
   });
 
-  it('heads to the stay after the spots, and plans the days last', () => {
-    expect(momentLabels(3, trip())[3]?.main).toBe('Stay');
+  it('heads to the flights after the spots, then the stay, and plans the days last', () => {
+    expect(momentLabels(3, trip())[3]?.main).toBe('Flights');
+    expect(momentLabels(4, trip())[4]?.main).toBe('Stay');
     expect(momentLabels(5, trip())[5]?.main).toBe('Day plan');
   });
 });

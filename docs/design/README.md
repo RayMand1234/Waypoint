@@ -28,7 +28,8 @@ Phone frame 390 × 844 for every screen.
 | Screen | File | Shows |
 |---|---|---|
 | Log in | `Main.dc.html` | Email, Google, Apple |
-| Home — my waypoints | `Home.dc.html` | Greeting, "Create a waypoint" card, draft / booked / past trips, bottom tab bar |
+| Home — my waypoints | `home-photos/HomePhotos.html` + `home-photos/README.md` | **Current.** Photo hero, trip postcards rail, "worth the trip" bento, been-there stamps. The README is the build brief. |
+| Home — original | `Home.dc.html` | Superseded by `home-photos/` (17 Oct 2026). Kept for history. |
 | 1 · Trip style | `Style.dc.html` | Route header, 8 style cards (multi-select), pace control, "N styles selected" + Continue |
 | 2 · Destination | `Destination.dc.html` | Search field, suggested destinations with estimated total and best-value badge, chosen destination in footer |
 | 3 · Spots, length & dates | `Spots.dc.html` | Dates, travelers, length 3/5/7/10, recommended spots checklist, "fits in N days" |
@@ -36,7 +37,7 @@ Phone frame 390 × 844 for every screen.
 | 5 · Flights | `Flights.dc.html` | Offer cards best value first, filter chips, details sheet with "Where we found it", "checked just now" |
 | 6 · Day plan | `Plan.dc.html` | Day tabs, timeline of stops with travel times, fixed items dashed, swap action, trip summary bar |
 
-The app runs the steps in this order (stay right after the spots, day plan last); the frames' own step numbers and Route labels predate the change.
+The app runs the steps in this order: style → destination → spots → flights → stay → day plan (day plan last); the frames' own step numbers and Route labels predate the change.
 | Summary | `Summary.dc.html` | Each part with price and Edit link, savings line, primary action |
 | Trip planned | `Booked.dc.html` | Arched midnight header with check, list of parts each with a deep-link button to its site and a "booked" tick |
 | Route moment | `RouteMoment.dc.html` (+ `route-moment.css`) | Full-screen midnight trip map between steps; `step` 1–6 sets the copy and the three tasks. `Go1.dc.html` shows how a screen embeds it (`Go2`–`Go6` are the same with steps 2–6). |

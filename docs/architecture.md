@@ -4,7 +4,7 @@ Status: **draft v2**, October 2026 — one backend service (`services/backend`),
 
 ## 1. Overview
 
-Waypoint plans a whole trip in under five minutes: trip style → destination → spots & dates → stay → flights → day-by-day plan → summary, always steering to the best quality for the money.
+Waypoint plans a whole trip in under five minutes: trip style → destination → spots & dates → flights → stay → day-by-day plan → summary, always steering to the best quality for the money.
 
 In years 1–2 Waypoint **plans and compares only**. It never takes payment; each part is booked on the partner site through a deep link, and Waypoint earns through affiliate programs.
 
@@ -82,7 +82,7 @@ Everything except `/health` needs `Authorization: Bearer <Supabase access token>
 | | `GET /hotels/:hotelId` | hotel detail |
 | | `POST /hotels/search` | live prices for a stay → ranked `HotelOffer[]` + `errors`; `location` may be `stops` (the trip's spots) |
 | flights | `POST /flights/search` | live fares (one way / round trip) → ranked `FlightOffer[]` + `errors` |
-| trips | `GET /trips` · `POST /trips` | my trips (each with `planDays` and chosen `selections`, so Home can show progress and resume a draft) · create a draft |
+| trips | `GET /trips` · `POST /trips` | my trips (each with `planDays`, chosen `selections` and `destinationPhoto` — the destination's current photo, joined at read — so Home can show progress, resume a draft and draw its postcard) · create a draft |
 | | `GET /trips/:id` · `PATCH /trips/:id` · `DELETE /trips/:id` | detail (spots, days, selections) · update picks/status · delete |
 | | `POST /trips/:id/plan` | build the day plan and save it (or, given each day's spots, re-order and re-time them) |
 | | `PUT /trips/:id/plan` | replace the day-by-day plan as given |
@@ -114,7 +114,7 @@ Each step saves the traveler's picks. The **route moment** between steps (the ~3
 | 6 | Day plan | `POST /trips/:id/plan` (built during the moment before it; edits send each day's spots) | — |
 | 7 | Summary → Trip planned | `PATCH /trips/:id` (`planned`) · `GET /trips/:id` · deep links · `PATCH …/booked` per row | — |
 
-The stay comes right after the spots so it can sit among them, and the day plan comes last: it starts each day from the stay, and flight times shorten the first and last days.
+Flights come right after the dates are set, then the stay (near the spots), and the day plan last: it starts each day from the stay, and flight times shorten the first and last days.
 
 A stay search by `stops` looks around the spots' geometric median (wide enough for 80% of them, 1–5 km) and scales each hotel's quality by how near it is to them against the other hotels found (`services/hotelLocation.logic.ts`; travel minutes are estimated in `lib/travel.ts`, which the day planner will share). Each offer carries `stopsMinutes` (the median, so one far spot doesn't count against a central hotel) and one has `isBestLocation`.
 
