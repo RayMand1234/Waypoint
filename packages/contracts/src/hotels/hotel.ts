@@ -72,6 +72,12 @@ export const hotelSummarySchema = z.object({
   /** Guest rating out of 10. */
   rating: z.number().min(0).max(10).nullable(),
   reviewCount: z.number().int().min(0).nullable(),
+  /**
+   * When `rating` is Waypoint's own average of the latest reviews (the
+   * source had no score), how many reviews it averages; `null` when it's
+   * the source's score.
+   */
+  ratedFrom: z.number().int().min(1).nullable().default(null),
   mainPhotoUrl: z.url().nullable(),
   thumbnailUrl: z.url().nullable(),
 });
@@ -160,6 +166,8 @@ export const hotelReviewsSchema = z.object({
   total: z.number().int().min(0),
   /** The average score of the latest reviews read (up to 1,000), out of 10; `null` without any. */
   averageScore: z.number().min(0).max(10).nullable(),
+  /** How many reviews `averageScore` averages. */
+  averagedCount: z.number().int().min(0),
   likes: z.array(z.string().min(1)),
   dislikes: z.array(z.string().min(1)),
   /** Highest score first. */

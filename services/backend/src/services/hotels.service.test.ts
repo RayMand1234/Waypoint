@@ -107,7 +107,9 @@ const ratingOf = async (
 
   if (!result.ok) throw new Error('search failed');
 
-  return result.value.offers.find((o) => o.hotel.id === hotelId)?.hotel.rating;
+  const hotel = result.value.offers.find((o) => o.hotel.id === hotelId)?.hotel;
+
+  return { rating: hotel?.rating, ratedFrom: hotel?.ratedFrom };
 };
 
 describe('hotel search ratings', () => {
@@ -116,8 +118,14 @@ describe('hotel search ratings', () => {
       Promise.resolve(ok(scored([8, 9, 10, 7]))),
     );
 
-    expect(await ratingOf(hotels, 'unrated')).toBe(8.5);
-    expect(await ratingOf(hotels, 'rated')).toBe(8);
+    expect(await ratingOf(hotels, 'unrated')).toEqual({
+      rating: 8.5,
+      ratedFrom: 4,
+    });
+    expect(await ratingOf(hotels, 'rated')).toEqual({
+      rating: 8,
+      ratedFrom: null,
+    });
     // Only the unrated hotel's reviews are read.
     expect(catalogReviews.mock.calls.map(([id]) => id)).not.toContain('rated');
   });
@@ -125,6 +133,9 @@ describe('hotel search ratings', () => {
   it('leaves it unrated when its reviews can’t be read', async () => {
     const { hotels } = setup(() => Promise.resolve(err({ type: 'timeout' })));
 
-    expect(await ratingOf(hotels, 'unrated')).toBeNull();
+    expect(await ratingOf(hotels, 'unrated')).toEqual({
+      rating: null,
+      ratedFrom: null,
+    });
   });
 });

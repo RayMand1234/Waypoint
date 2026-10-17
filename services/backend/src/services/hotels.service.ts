@@ -244,11 +244,19 @@ export const createHotelsService = ({
         if (!needsRating(offer.hotel)) return offer;
 
         const read = await reviews(offer.hotel.id);
-        const rating = read.ok ? read.value.reviews.averageScore : null;
 
-        return rating === null
-          ? offer
-          : { ...offer, hotel: { ...offer.hotel, rating } };
+        if (!read.ok || read.value.reviews.averageScore === null) return offer;
+
+        const { averageScore, averagedCount } = read.value.reviews;
+
+        return {
+          ...offer,
+          hotel: {
+            ...offer.hotel,
+            rating: averageScore,
+            ratedFrom: averagedCount,
+          },
+        };
       }),
     );
 

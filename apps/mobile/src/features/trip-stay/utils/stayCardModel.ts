@@ -55,8 +55,23 @@ export const stayHighlights = (
   topRatedId: firstLowest(offers, (offer) => -qualityOf(offer)),
 });
 
-const ratingText = ({ rating, stars }: HotelOffer['hotel']): string | null => {
-  if (rating !== null) return `${rating.toFixed(RATING_DECIMALS)} rating`;
+const thousands = new Intl.NumberFormat('en-GB');
+
+/** "from 1,000 reviews" when Waypoint averaged the score itself; `null` when it's the source's. */
+export const ratedFromText = (
+  hotel: Pick<HotelOffer['hotel'], 'ratedFrom'>,
+): string | null =>
+  hotel.ratedFrom === null
+    ? null
+    : `from ${thousands.format(hotel.ratedFrom)} ${hotel.ratedFrom === 1 ? 'review' : 'reviews'}`;
+
+/** "9.6 rating", "8.4 from 1,000 reviews" (our own average), or "4-star". */
+const ratingText = (hotel: HotelOffer['hotel']): string | null => {
+  const { rating, stars } = hotel;
+  const from = ratedFromText(hotel);
+
+  if (rating !== null)
+    return `${rating.toFixed(RATING_DECIMALS)} ${from ?? 'rating'}`;
 
   return stars === null ? null : `${String(stars)}-star`;
 };

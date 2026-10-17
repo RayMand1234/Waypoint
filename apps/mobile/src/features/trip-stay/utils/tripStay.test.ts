@@ -2,7 +2,12 @@ import { isoDateSchema, isoDateTimeSchema } from '@waypoint/contracts/common';
 import { hotelOfferSchema, type HotelOffer } from '@waypoint/contracts/hotels';
 import { spotSchema, type Spot } from '@waypoint/contracts/destinations';
 import { formatMoney } from '@/shared/utils/format';
-import { stayCard, stayHighlights, stayPhotos } from './stayCardModel';
+import {
+  ratedFromText,
+  stayCard,
+  stayHighlights,
+  stayPhotos,
+} from './stayCardModel';
 import { stayResultsState } from './stayResults';
 import { orderStays } from './stayOrder';
 import { pickedStops, stayRequest } from './stayRequest';
@@ -281,5 +286,12 @@ describe('review wording', () => {
     expect(scoreText(8.5)).toBe('8.5');
     expect(reviewCount(4557)).toBe('4,557 reviews');
     expect(reviewCount(1)).toBe('1 review');
+  });
+});
+
+describe('rating wording', () => {
+  it('says when the score is our own average of the reviews', () => {
+    expect(ratedFromText({ ratedFrom: 1000 })).toBe('from 1,000 reviews');
+    expect(ratedFromText({ ratedFrom: null })).toBeNull();
   });
 });

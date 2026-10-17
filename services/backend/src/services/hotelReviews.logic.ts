@@ -72,6 +72,7 @@ export const toHotelReviews = (
   return {
     total: source.total,
     averageScore: averageScore(source.reviews),
+    averagedCount: source.reviews.length,
     likes: [...source.likes],
     dislikes: [...source.dislikes],
     best: best.map(withoutLanguage),
