@@ -1,6 +1,7 @@
 import {
   assertNever,
   countryCodeSchema,
+  isoDateTimeSchema,
   ok,
   type CountryCode,
 } from '@waypoint/contracts/common';
@@ -8,6 +9,7 @@ import type {
   Cancellation,
   HotelLocation,
   HotelSummary,
+  TravelerType,
 } from '@waypoint/contracts/hotels';
 import { z } from 'zod';
 import { toMoney } from '../../lib/money.ts';
@@ -28,6 +30,8 @@ import {
   rawRateHotel,
   rawRateHotelData,
   rawRatesEnvelope,
+  rawReview,
+  rawReviewsEnvelope,
 } from './schemas.ts';
 
 /** liteAPI takes the location as flat fields on the query or body. */
@@ -76,6 +80,44 @@ const countryCodeOf = (
 
   return code.success ? code.data : null;
 };
+
+/** How many of the latest reviews are read; the best few are picked from these. */
+const REVIEWS_READ = 40;
+
+/** liteAPI's traveller groups as Waypoint's. */
+const TRAVELER_TYPES: Readonly<Record<string, TravelerType>> = {
+  solo_traveller: 'solo',
+  couple: 'couple',
+  family_with_children: 'family',
+  family_with_young_children: 'family',
+  family_with_older_children: 'family',
+  group: 'group',
+  extended_group: 'group',
+  group_of_friends: 'group',
+  business_traveller: 'business',
+};
+
+/** One review as Waypoint's; `undefined` when its date can't be read. */
+const toReview = (raw: z.output<typeof rawReview>) => {
+  const date = isoDateTimeSchema.safeParse(raw.date);
+
+  if (!date.success) return undefined;
+
+  return {
+    score: Math.min(Math.max(raw.averageScore, 0), 10),
+    name: nonEmpty(raw.name),
+    countryCode: countryCodeOf(raw.country),
+    travelerType: TRAVELER_TYPES[raw.type ?? ''] ?? 'other',
+    date: date.data,
+    headline: nonEmpty(raw.headline),
+    liked: nonEmpty(raw.pros),
+    disliked: nonEmpty(raw.cons),
+    language: nonEmpty(raw.language),
+  };
+};
+
+const nonEmptyAll = (values: readonly string[] | null | undefined): string[] =>
+  (values ?? []).flatMap((value) => nonEmpty(value) ?? []);
 
 const toSummary = (raw: z.output<typeof rawHotel>): HotelSummary => ({
   id: raw.id,
@@ -173,6 +215,28 @@ export const createLiteApiHotelCatalog = ({
       chain: nonEmpty(data.chain),
       checkinFrom: nonEmpty(data.checkinCheckoutTimes?.checkin_start),
       checkoutUntil: nonEmpty(data.checkinCheckoutTimes?.checkout),
+    });
+  },
+
+  reviews: async (hotelId) => {
+    const response = await client.get(
+      '/data/reviews',
+      { hotelId, limit: REVIEWS_READ, getSentiment: true },
+      rawReviewsEnvelope,
+    );
+
+    if (!response.ok) return response;
+
+    const { items, dropped } = parseEach(rawReview, response.value.data ?? []);
+    const reviews = items.flatMap((item) => toReview(item) ?? []);
+
+    logDropped(logger, 'reviews', dropped, reviews.length);
+
+    return ok({
+      total: response.value.total ?? reviews.length,
+      likes: nonEmptyAll(response.value.sentimentAnalysis?.pros),
+      dislikes: nonEmptyAll(response.value.sentimentAnalysis?.cons),
+      reviews,
     });
   },
 });

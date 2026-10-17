@@ -13,6 +13,7 @@ import {
   hotelDetailSchema,
   hotelLocationSchema,
   hotelOfferSchema,
+  hotelReviewsSchema,
   hotelSearchLocationSchema,
   hotelSummarySchema,
 } from './hotel.ts';
@@ -38,6 +39,16 @@ export type HotelParams = z.infer<typeof hotelParamsSchema>;
 
 export const getHotelResponseSchema = z.object({ hotel: hotelDetailSchema });
 export type GetHotelResponse = z.infer<typeof getHotelResponseSchema>;
+
+/* ── GET /hotels/:hotelId/reviews ──────────────────────────────────────── */
+
+/** What guests say, for the stay's details sheet. */
+export const getHotelReviewsResponseSchema = z.object({
+  reviews: hotelReviewsSchema,
+});
+export type GetHotelReviewsResponse = z.infer<
+  typeof getHotelReviewsResponseSchema
+>;
 
 /* ── POST /hotels/search ───────────────────────────────────────────────── */
 

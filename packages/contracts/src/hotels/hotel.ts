@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   countryCodeSchema,
+  isoDateTimeSchema,
   latitudeSchema,
   longitudeSchema,
   moneySchema,
@@ -123,3 +124,42 @@ export const hotelOfferSchema = z.object({
   value: offerValueSchema,
 });
 export type HotelOffer = z.infer<typeof hotelOfferSchema>;
+
+/** Who wrote a review, as the source groups travellers. */
+export const travelerTypeSchema = z.enum([
+  'solo',
+  'couple',
+  'family',
+  'group',
+  'business',
+  'other',
+]);
+export type TravelerType = z.infer<typeof travelerTypeSchema>;
+
+/** One guest review, as written; never edited or translated. */
+export const hotelReviewSchema = z.object({
+  /** Out of 10. */
+  score: z.number().min(0).max(10),
+  /** The reviewer's first name or nickname, as given. */
+  name: z.string().nullable(),
+  countryCode: countryCodeSchema.nullable(),
+  travelerType: travelerTypeSchema,
+  date: isoDateTimeSchema,
+  headline: z.string().nullable(),
+  liked: z.string().nullable(),
+  disliked: z.string().nullable(),
+});
+export type HotelReview = z.infer<typeof hotelReviewSchema>;
+
+/**
+ * What guests say about a hotel: how many reviews there are, what they like
+ * and dislike most (the source's summary of them; empty when it has none),
+ * and a few of the best written reviews.
+ */
+export const hotelReviewsSchema = z.object({
+  total: z.number().int().min(0),
+  likes: z.array(z.string().min(1)),
+  dislikes: z.array(z.string().min(1)),
+  reviews: z.array(hotelReviewSchema),
+});
+export type HotelReviews = z.infer<typeof hotelReviewsSchema>;

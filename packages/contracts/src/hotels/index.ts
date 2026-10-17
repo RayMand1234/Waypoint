@@ -3,10 +3,13 @@ export {
   hotelDetailSchema,
   hotelLocationSchema,
   hotelOfferSchema,
+  hotelReviewSchema,
+  hotelReviewsSchema,
   hotelSearchLocationSchema,
   hotelSummarySchema,
   MAX_STOPS,
   stopPointSchema,
+  travelerTypeSchema,
 } from './hotel.ts';
 export type {
   Cancellation,
@@ -15,10 +18,14 @@ export type {
   HotelOffer,
   HotelSearchLocation,
   HotelSummary,
+  HotelReview,
+  HotelReviews,
   StopPoint,
+  TravelerType,
 } from './hotel.ts';
 export {
   getHotelResponseSchema,
+  getHotelReviewsResponseSchema,
   hotelParamsSchema,
   DEFAULT_GUEST_NATIONALITY,
   hotelSearchRequestSchema,
@@ -28,6 +35,7 @@ export {
 } from './routes.ts';
 export type {
   GetHotelResponse,
+  GetHotelReviewsResponse,
   HotelParams,
   HotelSearchRequest,
   HotelSearchResponse,

@@ -9,6 +9,7 @@ import { pickedStops, stayRequest } from './stayRequest';
 import { selectionOf } from '@/features/trip-flow';
 import { chosenHotelId } from './staySelection';
 import { pageAt } from './gallery';
+import { reviewByline, reviewCount, scoreText } from './reviewModel';
 
 const offer = (
   id: string,
@@ -254,5 +255,31 @@ describe('pageAt', () => {
     expect(pageAt(5000, 300, 12)).toBe(11);
     expect(pageAt(-20, 300, 12)).toBe(0);
     expect(pageAt(100, 0, 12)).toBe(0);
+  });
+});
+
+describe('review wording', () => {
+  it('says who wrote it, how they travelled and when', () => {
+    expect(
+      reviewByline({
+        name: 'Charles',
+        travelerType: 'couple',
+        date: isoDateTimeSchema.parse('2026-10-14T00:00:00Z'),
+      }),
+    ).toBe('Charles · Couple · Oct 2026');
+    expect(
+      reviewByline({
+        name: null,
+        travelerType: 'other',
+        date: isoDateTimeSchema.parse('2026-01-02T00:00:00Z'),
+      }),
+    ).toBe('Jan 2026');
+  });
+
+  it('words scores and counts', () => {
+    expect(scoreText(10)).toBe('10');
+    expect(scoreText(8.5)).toBe('8.5');
+    expect(reviewCount(4557)).toBe('4,557 reviews');
+    expect(reviewCount(1)).toBe('1 review');
   });
 });

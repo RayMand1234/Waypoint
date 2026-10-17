@@ -1,9 +1,11 @@
 import { assertNever, type Result } from '@waypoint/contracts/common';
 import {
   getHotelResponseSchema,
+  getHotelReviewsResponseSchema,
   hotelSearchResponseSchema,
   listHotelsResponseSchema,
   type GetHotelResponse,
+  type GetHotelReviewsResponse,
   type HotelOffer,
   type HotelSearchRequest,
   type HotelSearchResponse,
@@ -23,6 +25,7 @@ import type {
 import { DAY_MS } from '../lib/time.ts';
 import type { Cached } from './cache.service.ts';
 import { loadFromProvider, type ServiceError } from './errors.ts';
+import { toHotelReviews } from './hotelReviews.logic.ts';
 import {
   locationFactor,
   searchArea,
@@ -35,6 +38,8 @@ import { LIVE_RATES_TTL_MS, searchOffers, toOfferSource } from './offers.ts';
 import { rankByValue } from './value.ts';
 
 const CATALOG_TTL_MS = 7 * DAY_MS;
+/** New reviews come in daily. */
+const REVIEWS_TTL_MS = DAY_MS;
 const PROVIDER_TIMEOUT_MS = 12_000;
 /** Used when a hotel has neither a guest rating nor stars. */
 const UNKNOWN_QUALITY = 0.6;
@@ -50,6 +55,10 @@ export type HotelsService = {
   readonly detail: (
     hotelId: string,
   ) => Promise<Result<GetHotelResponse, ServiceError>>;
+  /** What guests say: the total, the summary, and the best few reviews. */
+  readonly reviews: (
+    hotelId: string,
+  ) => Promise<Result<GetHotelReviewsResponse, ServiceError>>;
   readonly search: (
     request: HotelSearchRequest,
   ) => Promise<Result<HotelSearchResponse, ServiceError>>;
@@ -234,6 +243,19 @@ export const createHotelsService = ({
         catalog.id,
         () => catalog.hotel(hotelId),
         (hotel) => ({ hotel }),
+        'We have no hotel with that id.',
+      ),
+    }),
+
+  reviews: (hotelId) =>
+    cached({
+      key: `hotels:reviews:${hotelId}`,
+      ttlMs: REVIEWS_TTL_MS,
+      schema: getHotelReviewsResponseSchema,
+      load: loadFromProvider(
+        catalog.id,
+        () => catalog.reviews(hotelId),
+        (source) => ({ reviews: toHotelReviews(source) }),
         'We have no hotel with that id.',
       ),
     }),

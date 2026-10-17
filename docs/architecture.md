@@ -80,6 +80,7 @@ Everything except `/health` needs `Authorization: Bearer <Supabase access token>
 | spots | `GET /spots/:spotId` · `GET /spots/:spotId/rating` | one spot · its Google rating, fetched live (never stored) |
 | hotels | `GET /hotels?type=place\|city\|coordinates&…&limit&offset` | hotel catalog (no prices) |
 | | `GET /hotels/:hotelId` | hotel detail |
+| | `GET /hotels/:hotelId/reviews` | what guests say: total, the source's likes/dislikes summary, the best 3 written English reviews (liteAPI `/data/reviews`, cached a day) |
 | | `POST /hotels/search` | live prices for a stay → ranked `HotelOffer[]` + `errors`; `location` may be `stops` (the trip's spots) |
 | flights | `POST /flights/search` | live fares (one way / round trip) → ranked `FlightOffer[]` + `errors` |
 | trips | `GET /trips` · `POST /trips` | my trips (each with `planDays`, chosen `selections` and `destinationPhoto` — the destination's current photo, joined at read — so Home can show progress, resume a draft and draw its postcard) · create a draft |
@@ -108,10 +109,10 @@ Each step saves the traveler's picks. The **route moment** between steps (the ~3
 | 0 | Log in / Home | Supabase Auth · `GET /me` · `GET /trips` | — |
 | 1 | Trip style | `POST /trips` (draft) · `PATCH /trips/:id` | `GET /countries`, `GET /places?q=` |
 | 2 | Destination | `PATCH /trips/:id` · `GET /countries/:cc/cities/:city/prices` | `GET /places/:placeId` |
-| 3 | Spots & dates | `PATCH /trips/:id` (spots, dates) | — |
-| 4 | Stay | `POST /hotels/search` (`stops`: the picked spots) · `GET /hotels/:hotelId` · `PUT /trips/:id/selections/stay` | `POST /flights/search` (round trip, the whole party) |
-| 5 | Flights | `POST /flights/search` · `PUT /trips/:id/selections/flight` | — |
-| 6 | Day plan | `POST /trips/:id/plan` (built during the moment before it; edits send each day's spots) | — |
+| 3 | Spots & dates | `PATCH /trips/:id` (spots, dates) | `POST /flights/search` (round trip, the whole party) |
+| 4 | Flights | `POST /flights/search` · `PUT /trips/:id/selections/flight` | `POST /hotels/search` (`stops`: the picked spots) |
+| 5 | Stay | `POST /hotels/search` (`stops`: the picked spots) · `GET /hotels/:hotelId` · `GET /hotels/:hotelId/reviews` · `PUT /trips/:id/selections/stay` | `POST /trips/:id/plan` |
+| 6 | Day plan | `POST /trips/:id/plan` (built during the moment before it; edits send each day's spots, order and lunch's place) | — |
 | 7 | Summary → Trip planned | `PATCH /trips/:id` (`planned`) · `GET /trips/:id` · deep links · `PATCH …/booked` per row | — |
 
 Flights come right after the dates are set, then the stay (near the spots), and the day plan last: it starts each day from the stay, and flight times shorten the first and last days.
