@@ -8,6 +8,7 @@ import { orderStays } from './stayOrder';
 import { pickedStops, stayRequest } from './stayRequest';
 import { selectionOf } from '@/features/trip-flow';
 import { chosenHotelId } from './staySelection';
+import { pageAt } from './gallery';
 
 const offer = (
   id: string,
@@ -243,5 +244,15 @@ describe('stayPhotos', () => {
       'https://img.example/main.jpg',
     ]);
     expect(stayPhotos(offer('q', 1_000), undefined)).toEqual([]);
+  });
+});
+
+describe('pageAt', () => {
+  it('settles on the nearest photo, within the gallery', () => {
+    expect(pageAt(0, 300, 12)).toBe(0);
+    expect(pageAt(640, 300, 12)).toBe(2);
+    expect(pageAt(5000, 300, 12)).toBe(11);
+    expect(pageAt(-20, 300, 12)).toBe(0);
+    expect(pageAt(100, 0, 12)).toBe(0);
   });
 });

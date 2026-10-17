@@ -1,13 +1,16 @@
+import { Image } from 'expo-image';
 import { ImageIcon } from 'lucide-react-native';
-import { useState } from 'react';
-import { Image, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { FlatList, View, type LayoutChangeEvent } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { Text } from '@/shared/components';
+import { pageAt } from '../utils/gallery';
 import { StayThumb } from './StayThumb';
 
-const MAX_THUMBS = 4;
-
-/** One big photo, its count, and up to four thumbnails to switch it. */
+/**
+ * Every photo of the stay: a big one to swipe through, its count, and a
+ * scrolling strip of all the thumbnails — tapping one shows it.
+ */
 export const StayPhotos = ({
   name,
   urls,
@@ -16,10 +19,20 @@ export const StayPhotos = ({
   readonly urls: readonly string[];
 }) => {
   const { theme } = useUnistyles();
+  const [width, setWidth] = useState(0);
   const [shown, setShown] = useState(0);
-  const url = urls[shown];
+  const pager = useRef<FlatList<string>>(null);
+  const strip = useRef<FlatList<string>>(null);
 
-  if (url === undefined)
+  const show = (index: number, { scrollPager }: { scrollPager: boolean }) => {
+    setShown(index);
+
+    if (scrollPager) pager.current?.scrollToIndex({ index, animated: true });
+
+    strip.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
+  };
+
+  if (urls.length === 0)
     return (
       <View style={[styles.big, styles.placeholder]}>
         <ImageIcon
@@ -34,32 +47,73 @@ export const StayPhotos = ({
     );
 
   return (
-    <View style={styles.photos}>
-      <View>
-        <Image
-          source={{ uri: url }}
-          style={styles.big}
-          accessibilityLabel={`Photo ${String(shown + 1)} of ${name}`}
-        />
-        <View style={styles.count}>
-          <Text variant="caption-strong" color="surface-card">
+    <View
+      style={styles.photos}
+      onLayout={(event: LayoutChangeEvent) => {
+        setWidth(event.nativeEvent.layout.width);
+      }}
+    >
+      <View style={styles.big}>
+        {width > 0 && (
+          <FlatList
+            ref={pager}
+            data={urls}
+            keyExtractor={(url) => url}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            getItemLayout={(_, index) => ({
+              length: width,
+              offset: width * index,
+              index,
+            })}
+            onMomentumScrollEnd={(event) => {
+              show(
+                pageAt(event.nativeEvent.contentOffset.x, width, urls.length),
+                { scrollPager: false },
+              );
+            }}
+            renderItem={({ item, index }) => (
+              <Image
+                source={{ uri: item }}
+                style={styles.page(width)}
+                contentFit="cover"
+                accessibilityLabel={`Photo ${String(index + 1)} of ${name}`}
+              />
+            )}
+          />
+        )}
+        <View style={styles.count} pointerEvents="none">
+          <Text variant="caption-strong" color="surface-card" tabular>
             {`${String(shown + 1)} / ${String(urls.length)}`}
           </Text>
         </View>
       </View>
-      <View style={styles.thumbs}>
-        {urls.slice(0, MAX_THUMBS).map((thumb, index) => (
-          <StayThumb
-            key={thumb}
-            url={thumb}
-            index={index}
-            isShown={index === shown}
-            onPress={() => {
-              setShown(index);
-            }}
-          />
-        ))}
-      </View>
+      {urls.length > 1 && (
+        <FlatList
+          ref={strip}
+          data={urls}
+          keyExtractor={(url) => url}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.thumbs}
+          getItemLayout={(_, index) => ({
+            length: theme.size['stay-thumb-w'] + theme.space[2],
+            offset: (theme.size['stay-thumb-w'] + theme.space[2]) * index,
+            index,
+          })}
+          renderItem={({ item, index }) => (
+            <StayThumb
+              url={item}
+              index={index}
+              isShown={index === shown}
+              onPress={() => {
+                show(index, { scrollPager: true });
+              }}
+            />
+          )}
+        />
+      )}
     </View>
   );
 };
@@ -70,9 +124,14 @@ const styles = StyleSheet.create((theme) => ({
   },
   big: {
     height: theme.size['stay-photo-h'],
+    overflow: 'hidden',
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors['midnight-100'],
   },
+  page: (width: number) => ({
+    width,
+    height: theme.size['stay-photo-h'],
+  }),
   placeholder: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -87,7 +146,6 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.scrim,
   },
   thumbs: {
-    flexDirection: 'row',
     gap: theme.space[2],
   },
 }));

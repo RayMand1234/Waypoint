@@ -69,6 +69,7 @@ export const StayResults = ({
                 badges={card.badges}
                 isBestValue={card.isBestValue}
                 isSelected={hotelId === pickedId}
+                photoUrl={offer.hotel.mainPhotoUrl}
                 onPress={() => {
                   onPick(hotelId);
                 }}
