@@ -99,8 +99,8 @@ describe('routePicks', () => {
       'Views +1',
       'Lisbon',
       '5 days',
-      'Casa',
       'TAP direct',
+      'Casa',
     ]);
   });
 

@@ -14,8 +14,8 @@ export type FinishedStep = 1 | 2 | 3 | 4 | 5 | 6;
 export const NEXT_STEP: Readonly<Record<FinishedStep, StepKey>> = {
   1: 'destination',
   2: 'spots',
-  3: 'stay',
-  4: 'flights',
+  3: 'flights',
+  4: 'stay',
   5: 'plan',
   6: 'summary',
 };
@@ -64,17 +64,6 @@ export const momentContent = (
     case 3:
       return {
         title: `${days === null ? 'Your days' : plural(days, 'day')}, ${plural(trip.spots.length, 'spot')}.`,
-        sheetTitle: 'Finding where to sleep',
-        tasks: [
-          'Finding the middle of your spots',
-          'Looking for stays nearby',
-          'Weighing price against location',
-        ],
-        go: 'Choose your stay',
-      };
-    case 4:
-      return {
-        title: 'Your stay is set.',
         sheetTitle: 'Finding your flights',
         tasks: [
           `Searching flights that fit day 1 and ${String(days ?? 1)}`,
@@ -83,9 +72,20 @@ export const momentContent = (
         ],
         go: 'Choose your flight',
       };
-    case 5:
+    case 4:
       return {
         title: 'Your flight is set.',
+        sheetTitle: 'Finding where to sleep',
+        tasks: [
+          'Finding the middle of your spots',
+          'Looking for stays nearby',
+          'Weighing price against location',
+        ],
+        go: 'Choose your stay',
+      };
+    case 5:
+      return {
+        title: 'Your stay is set.',
         sheetTitle: 'Building your day plan',
         tasks: [
           'Grouping spots by neighbourhood',
@@ -118,7 +118,7 @@ export type MomentLabel = {
 
 const NAMES = [
   ...(
-    ['style', 'destination', 'spots', 'stay', 'flights', 'plan'] as const
+    ['style', 'destination', 'spots', 'flights', 'stay', 'plan'] as const
   ).map((key) => STEP_NAMES[key]),
   'Book',
 ];

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   isoDateTimeSchema,
+  photoSchema,
   isoTimeSchema,
   latitudeSchema,
   longitudeSchema,
@@ -28,19 +29,6 @@ export const spotCategorySchema = z.enum([
   'bridge',
 ]);
 export type SpotCategory = z.infer<typeof spotCategorySchema>;
-
-/**
- * A photo we may show, with the credit its licence requires (most are
- * Creative Commons from Wikimedia Commons). `sourceUrl` is the photo's page.
- */
-export const photoSchema = z.object({
-  url: z.url(),
-  author: z.string().nullable(),
-  license: z.string().min(1),
-  licenseUrl: z.url().nullable(),
-  sourceUrl: z.url(),
-});
-export type Photo = z.infer<typeof photoSchema>;
 
 /** One opening period. `day` is ISO: 1 = Monday … 7 = Sunday. */
 export const openingPeriodSchema = z.object({

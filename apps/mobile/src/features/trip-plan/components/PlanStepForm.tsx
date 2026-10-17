@@ -39,8 +39,10 @@ export const PlanStepForm = ({
       tripTitle={tripTitle(trip)}
       picks={routePicks(trip)}
       question={`Your ${String(trip.days.length)}-day plan`}
-      hint={`We built it around your ${plural(spotCount, 'spot')}. Move or remove anything.`}
+      hint={`We built it around your ${plural(spotCount, 'spot')}. Reorder, move or remove anything.`}
+      isScrollLocked={step.isDragging}
       onBack={step.navigation.back}
+      onCheckpointPress={step.navigation.jumpBack}
       onClose={step.navigation.close}
       footer={
         <StepFooter
@@ -82,7 +84,10 @@ export const PlanStepForm = ({
             day={day}
             meta={dayMeta(day, trip.pace)}
             spotsById={step.spotsById}
+            keys={step.dayKeys}
+            drag={step.drag}
             onEdit={step.edit}
+            onNudge={step.nudge}
           />
           <NotPlanned
             spots={step.notPlanned}

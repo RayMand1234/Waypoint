@@ -1,0 +1,1 @@
+export { PaperBackground } from './PaperBackground';

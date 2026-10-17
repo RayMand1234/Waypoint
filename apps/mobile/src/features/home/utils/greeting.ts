@@ -11,11 +11,24 @@ export const greetingFor = (hour: number): string => {
   return 'Good evening';
 };
 
-/** "Hi, Ray" from "Ray Mandel"; "Hi there" before the traveler has a name. */
-export const hiLine = (name: string | null): string => {
+const firstName = (name: string | null): string | undefined => {
   const first = name?.trim().split(/\s+/)[0];
 
-  return first === undefined || first === '' ? 'Hi there' : `Hi, ${first}`;
+  return first === '' ? undefined : first;
+};
+
+/** "Hi, Ray" from "Ray Mandel"; "Hi there" before the traveler has a name. */
+export const hiLine = (name: string | null): string => {
+  const first = firstName(name);
+
+  return first === undefined ? 'Hi there' : `Hi, ${first}`;
+};
+
+/** "Good evening, Ray"; just "Good evening" before the traveler has a name. */
+export const greetingLine = (greeting: string, name: string | null): string => {
+  const first = firstName(name);
+
+  return first === undefined ? greeting : `${greeting}, ${first}`;
 };
 
 /** The avatar letter: the name's first letter, else the email's. */

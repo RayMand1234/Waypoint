@@ -4,15 +4,16 @@ import { PLANNING_STEP_COUNT } from '@/shared/constants/planning';
 
 /**
  * The six planning steps, then the summary and the booked end state. Order
- * matters: the stay comes right after the spots so it can sit among them,
- * and the day plan comes last, starting each day from the stay.
+ * matters: flights come right after the dates are set, the stay next (near
+ * the spots), and the day plan last — it starts each day from the stay and
+ * fits the first and last days around the flights.
  */
 export const stepKeySchema = z.enum([
   'style',
   'destination',
   'spots',
-  'stay',
   'flights',
+  'stay',
   'plan',
   'summary',
   'booked',
@@ -58,9 +59,9 @@ export const currentStep = (trip: StepInput): StepKey => {
 
   if (trip.startDate === null || trip.endDate === null) return 'spots';
 
-  if (!trip.selections.includes('stay')) return 'stay';
-
   if (!trip.selections.includes('flight')) return 'flights';
+
+  if (!trip.selections.includes('stay')) return 'stay';
 
   if (trip.planDays === 0) return 'plan';
 

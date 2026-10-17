@@ -13,6 +13,7 @@ const envSchema = z.object({
   googleWebClientId: optional,
   googleIosClientId: optional,
   appleSignIn: z.preprocess((value) => value === 'enabled', z.boolean()),
+  tabBar: z.preprocess((value) => value === 'enabled', z.boolean()),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -29,6 +30,7 @@ export const parseEnv = (): Env => {
     googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
     googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     appleSignIn: process.env.EXPO_PUBLIC_APPLE_SIGN_IN,
+    tabBar: process.env.EXPO_PUBLIC_FEATURE_TAB_BAR,
   });
 
   if (parsed.success) return parsed.data;

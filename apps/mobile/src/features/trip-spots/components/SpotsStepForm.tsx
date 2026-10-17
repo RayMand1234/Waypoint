@@ -31,13 +31,14 @@ export const SpotsStepForm = ({
       picks={routePicks(trip)}
       question="When, and what to see?"
       onBack={step.navigation.back}
+      onCheckpointPress={step.navigation.jumpBack}
       onClose={step.navigation.close}
       footer={
         <StepFooter
           caption={step.caption}
           value={`${trip.destinationName ?? ''} · ${plural(step.days, 'day')}`}
           action={{
-            label: 'Find a stay',
+            label: 'Find flights',
             onPress: () => void step.submit(),
             isDisabled: !step.canContinue,
             isLoading: step.isSaving,

@@ -26,6 +26,7 @@ export const StyleStepForm = ({ trip }: { readonly trip: TripDetail }) => {
       question="What kind of trip?"
       hint="Pick everything that fits. We'll match destinations and spots to it."
       onBack={navigation.back}
+      onCheckpointPress={navigation.jumpBack}
       onClose={navigation.close}
       footer={
         <StepFooter

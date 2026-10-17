@@ -10,6 +10,7 @@ export { NO_TRIP_MESSAGE, useTripParams } from './hooks/useTripParams';
 export { useUpdateTrip } from './hooks/useUpdateTrip';
 export { routePicks, STYLE_SHORT_NAMES, tripTitle } from './utils/routePicks';
 export { momentHref, stepHref } from './utils/stepHref';
+export { updateTrip } from './utils/tripApi';
 export {
   completedSteps,
   currentStep,

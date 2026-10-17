@@ -45,7 +45,7 @@ const flightPick = (offer: FlightOffer): string => {
   return `${firstWord(airline)} ${stops === 0 ? 'direct' : plural(stops, 'stop')}`;
 };
 
-/** What the traveler picked at each passed step, as the Route labels them: "Views +2", "Lisbon", "5 days", "Casa", "TAP direct". */
+/** What the traveler picked at each passed step, as the Route labels them: "Views +2", "Lisbon", "5 days", "TAP direct", "Casa". */
 export const routePicks = (
   trip: Pick<
     TripDetail,
@@ -60,8 +60,8 @@ export const routePicks = (
     trip.startDate === null || trip.endDate === null
       ? undefined
       : plural(tripDays(trip.startDate, trip.endDate), 'day'),
-    stay === undefined ? undefined : firstWord(stay.hotel.name),
     flight === undefined ? undefined : flightPick(flight),
+    stay === undefined ? undefined : firstWord(stay.hotel.name),
   ];
   const firstGap = picks.indexOf(undefined);
 

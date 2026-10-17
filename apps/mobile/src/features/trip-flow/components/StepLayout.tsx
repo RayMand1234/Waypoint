@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { Route, Text } from '@/shared/components';
+import { PaperBackground, Route, Text } from '@/shared/components';
 import {
   PLANNING_STEP_COUNT,
   STEP_NAMES,
@@ -19,6 +19,8 @@ type StepLayoutProps = {
   /** The step's one question, in `title-lg`. */
   readonly question: string;
   readonly hint?: string;
+  /** Stops the content scrolling, e.g. while something is dragged. */
+  readonly isScrollLocked?: boolean;
   readonly onBack: () => void;
   readonly onClose: () => void;
   readonly onCheckpointPress?: (step: number) => void;
@@ -26,13 +28,14 @@ type StepLayoutProps = {
   readonly children: ReactNode;
 };
 
-/** Every planning step: header, the Route, one question, the step's content, and its pinned footer. */
+/** Every planning step: header, the Route, one question, the step's content, and its pinned footer — on the dotted paper. */
 export const StepLayout = ({
   step,
   tripTitle,
   picks,
   question,
   hint,
+  isScrollLocked = false,
   onBack,
   onClose,
   onCheckpointPress,
@@ -40,6 +43,7 @@ export const StepLayout = ({
   children,
 }: StepLayoutProps) => (
   <View style={styles.screen}>
+    <PaperBackground hasGlows />
     <View style={styles.header}>
       <StepHeader title={tripTitle} onBack={onBack} onClose={onClose} />
       <Route
@@ -52,6 +56,7 @@ export const StepLayout = ({
     <ScrollView
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      scrollEnabled={!isScrollLocked}
     >
       <View style={styles.question}>
         <Text variant="title-lg" accessibilityRole="header">

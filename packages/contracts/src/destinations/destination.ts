@@ -5,9 +5,9 @@ import {
   latitudeSchema,
   longitudeSchema,
   moneySchema,
+  photoSchema,
 } from '../common/index.ts';
 import { tripStyleSchema } from '../trips/index.ts';
-import { photoSchema } from './spot.ts';
 
 /** A city Waypoint plans trips to — curated, with its main airport. */
 export const destinationSchema = z.object({

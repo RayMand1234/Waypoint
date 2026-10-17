@@ -1,10 +1,9 @@
 import type { Spot } from '@waypoint/contracts/destinations';
 import { STYLE_SHORT_NAMES } from '@/features/trip-flow';
 import { formatDuration } from '@/shared/utils/format';
+import { photoAtWidth } from '@/shared/utils/photoUrl';
 
 const TOP_PICKS = 3;
-/** A standard Wikimedia thumbnail width: sharp in a two-column card, a fraction of the full photo's size. */
-const CARD_PHOTO_WIDTH = 500;
 const STYLES_IN_META = 2;
 
 /** "Views · Culture · 2h". */
@@ -36,16 +35,8 @@ export const topPicksFirst = <T extends Pick<Spot, 'id'>>(
   ...spots.filter((spot) => !topPicks.has(spot.id)),
 ];
 
-/**
- * The photo at card size: a Wikimedia thumbnail wider than the card is asked
- * for at `CARD_PHOTO_WIDTH` instead; any other URL is used as it is.
- */
-export const cardPhotoUrl = (url: string): string =>
-  url.replace(/\/(\d+)px-/, (match, width: string) =>
-    Number(width) > CARD_PHOTO_WIDTH
-      ? `/${String(CARD_PHOTO_WIDTH)}px-`
-      : match,
-  );
+/** The photo at card size: sharp in a two-column card, a fraction of the full photo. */
+export const cardPhotoUrl = (url: string): string => photoAtWidth(url, 500);
 
 /** The ids with `id` added, or removed if it was there. */
 export const toggleId = (ids: readonly string[], id: string): string[] =>

@@ -1,9 +1,4 @@
-import type {
-  Fee,
-  Photo,
-  Spot,
-  SpotCategory,
-} from '@waypoint/contracts/destinations';
+import type { Fee, Spot, SpotCategory } from '@waypoint/contracts/destinations';
 import { STYLE_SHORT_NAMES } from '@/features/trip-flow';
 import { formatDuration, formatMoney } from '@/shared/utils/format';
 
@@ -107,9 +102,3 @@ export const googleMapsUrl = (name: string, city: string | null): string =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     city === null ? name : `${name}, ${city}`,
   )}`;
-
-/** "Photo: Rehman Abubakr · CC BY-SA 4.0" — the credit the photo's licence requires. */
-export const photoCredit = (photo: Pick<Photo, 'author' | 'license'>): string =>
-  `Photo: ${[photo.author, photo.license]
-    .filter((part) => part !== null && part.trim() !== '')
-    .join(' · ')}`;

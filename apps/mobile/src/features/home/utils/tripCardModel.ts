@@ -1,12 +1,13 @@
+import type { Photo } from '@waypoint/contracts/destinations';
 import type { TripListItem } from '@waypoint/contracts/trips';
 import { assertNever } from '@waypoint/contracts/common';
 import {
   completedSteps,
   currentStep,
+  PLANNING_STEP_COUNT,
   STEP_NAMES,
   type StepKey,
 } from '@/features/trip-flow';
-import type { BadgeProps } from '@/shared/components';
 import { formatDateRange, formatTravelers } from '@/shared/utils/format';
 import { capitalised, listOf } from '@/shared/utils/text';
 
@@ -15,23 +16,25 @@ export type TripTarget =
   | { readonly kind: 'step'; readonly step: StepKey }
   | { readonly kind: 'plan-again' };
 
-/** Everything a trip row shows, already worded. */
+/** Everything a trip postcard shows, already worded. */
 export type TripCardModel = {
   readonly id: string;
   readonly title: string;
-  /** Three letters on the thumbnail; `null` before a destination is picked. */
+  /** Three letters on the card (and on the photo's stand-in); `null` before a destination is picked. */
   readonly code: string | null;
+  readonly photo: Photo | null;
   readonly tone: 'draft' | 'ready' | 'past';
+  /** The status pill: "Draft", "Ready to book", "Booked". */
+  readonly pill: string;
   readonly line: string;
-  readonly status:
-    | { readonly kind: 'badge'; readonly badge: BadgeProps }
-    | { readonly kind: 'text'; readonly text: string };
   /** Planning steps done (drafts only). */
   readonly progress: number | null;
   readonly action: { readonly text: string; readonly isLink: boolean };
   readonly target: TripTarget;
   /** Only a draft can be deleted from Home. */
   readonly canDelete: boolean;
+  /** The whole card for a screen reader. */
+  readonly label: string;
 };
 
 const CODE_LENGTH = 3;
@@ -59,17 +62,14 @@ const readyLine = (trip: TripListItem): string => {
 
 const statusParts = (
   trip: TripListItem,
-): Pick<
-  TripCardModel,
-  'tone' | 'status' | 'progress' | 'action' | 'target'
-> => {
+): Pick<TripCardModel, 'tone' | 'pill' | 'progress' | 'action' | 'target'> => {
   switch (trip.status) {
     case 'draft': {
       const step = currentStep(trip);
 
       return {
         tone: 'draft',
-        status: { kind: 'badge', badge: { kind: 'neutral', label: 'Draft' } },
+        pill: 'Draft',
         progress: completedSteps(step),
         action: { text: `Continue · ${STEP_NAMES[step]}`, isLink: true },
         target: { kind: 'step', step },
@@ -78,7 +78,7 @@ const statusParts = (
     case 'planned':
       return {
         tone: 'ready',
-        status: { kind: 'badge', badge: { kind: 'neutral', label: 'Planned' } },
+        pill: 'Ready to book',
         progress: null,
         action: { text: 'Go to booking', isLink: true },
         target: { kind: 'step', step: 'booked' },
@@ -86,7 +86,7 @@ const statusParts = (
     case 'booked':
       return {
         tone: 'ready',
-        status: { kind: 'badge', badge: { kind: 'savings', label: 'Booked' } },
+        pill: 'Booked',
         progress: null,
         action: { text: readyLine(trip), isLink: false },
         target: { kind: 'step', step: 'booked' },
@@ -94,7 +94,7 @@ const statusParts = (
     case 'past':
       return {
         tone: 'past',
-        status: { kind: 'text', text: 'Past' },
+        pill: 'Past',
         progress: null,
         action: { text: 'Plan it again', isLink: true },
         target: { kind: 'plan-again' },
@@ -104,14 +104,43 @@ const statusParts = (
   }
 };
 
-export const toTripCard = (trip: TripListItem): TripCardModel => ({
-  id: trip.id,
-  title: trip.destinationName ?? 'New waypoint',
-  code:
-    trip.destinationName === null
-      ? null
-      : trip.destinationName.slice(0, CODE_LENGTH).toUpperCase(),
-  line: `${datesLine(trip)} · ${formatTravelers(travelerCount(trip))}`,
-  ...statusParts(trip),
-  canDelete: trip.status === 'draft',
+/** "Lisbon, 16–20 Nov · 2 travelers, draft, 4 of 6 steps. Continue · Flights." */
+const labelOf = (
+  card: Pick<TripCardModel, 'title' | 'line' | 'pill' | 'progress' | 'action'>,
+): string =>
+  [
+    card.title,
+    card.line,
+    card.pill.toLowerCase(),
+    ...(card.progress === null
+      ? []
+      : [`${String(card.progress)} of ${String(PLANNING_STEP_COUNT)} steps`]),
+  ].join(', ') + `. ${card.action.text}.`;
+
+export const toTripCard = (trip: TripListItem): TripCardModel => {
+  const card = {
+    id: trip.id,
+    title: trip.destinationName ?? 'New waypoint',
+    code:
+      trip.destinationName === null
+        ? null
+        : trip.destinationName.slice(0, CODE_LENGTH).toUpperCase(),
+    photo: trip.destinationPhoto,
+    line: `${datesLine(trip)} · ${formatTravelers(travelerCount(trip))}`,
+    ...statusParts(trip),
+    canDelete: trip.status === 'draft',
+  };
+
+  return { ...card, label: labelOf(card) };
+};
+
+/** Home's two places for trips: the postcard rail (still to come) and the been-there stamps. */
+export const splitTrips = (
+  trips: readonly TripListItem[],
+): {
+  readonly upcoming: readonly TripListItem[];
+  readonly past: readonly TripListItem[];
+} => ({
+  upcoming: trips.filter((trip) => trip.status !== 'past'),
+  past: trips.filter((trip) => trip.status === 'past'),
 });

@@ -2,7 +2,7 @@ import type { Photo } from '@waypoint/contracts/destinations';
 import { Image, Linking, Pressable, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Text } from '@/shared/components';
-import { photoCredit } from '../utils/spotDetails';
+import { photoCredit } from '@/shared/utils/photoUrl';
 
 /** The spot's photo with the credit its licence requires; the credit opens the photo's page. */
 export const SpotPhoto = ({

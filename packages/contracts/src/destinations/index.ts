@@ -32,7 +32,6 @@ export {
   feeSchema,
   openingHoursSchema,
   openingPeriodSchema,
-  photoSchema,
   spotCategorySchema,
   spotRatingSchema,
   spotSchema,
@@ -41,8 +40,10 @@ export type {
   Fee,
   OpeningHours,
   OpeningPeriod,
-  Photo,
   Spot,
   SpotCategory,
   SpotRating,
 } from './spot.ts';
+/** A photo with its licence credit — defined in `common`, re-exported where destinations and spots use it. */
+export { photoSchema } from '../common/index.ts';
+export type { Photo } from '../common/index.ts';

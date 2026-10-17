@@ -261,8 +261,90 @@ describe('buildPlan / arrangePlan', () => {
     const heavy = [1, 2, 3, 4].map((n) =>
       spot(`h${String(n)}`, 38.711, -9.141, { visitMinutes: 120 }),
     );
-    const days = arrangePlan(frames, HOME, new Map([[DATES[0] ?? '', heavy]]));
+    const days = arrangePlan(
+      frames,
+      HOME,
+      new Map([[DATES[0] ?? '', { spots: heavy, lunchAfter: undefined }]]),
+      new Map(),
+    );
 
     expect(days[0]?.stops.filter((s) => s.kind === 'spot')).toHaveLength(4);
+  });
+
+  it("keeps the traveler's order, even when another is shorter", () => {
+    const frames = plainDays(1);
+    const near = spot('near', 38.712, -9.141);
+    const mid = spot('mid', 38.73, -9.141);
+    const far = spot('far', 38.76, -9.141);
+    const day = DATES[0] ?? '';
+    const days = arrangePlan(
+      frames,
+      HOME,
+      new Map([[day, { spots: [far, near, mid], lunchAfter: undefined }]]),
+      new Map([[day, new Set(['far', 'near', 'mid'])]]),
+    );
+
+    expect(
+      days[0]?.stops.flatMap((s) => (s.kind === 'spot' ? [s.spotId] : [])),
+    ).toEqual(['far', 'near', 'mid']);
+  });
+
+  it('puts a spot new to the day where it adds the least travel', () => {
+    const frames = plainDays(1);
+    const near = spot('near', 38.712, -9.141);
+    const mid = spot('mid', 38.73, -9.141);
+    const far = spot('far', 38.76, -9.141);
+    const day = DATES[0] ?? '';
+    const days = arrangePlan(
+      frames,
+      HOME,
+      new Map([[day, { spots: [near, far, mid], lunchAfter: undefined }]]),
+      new Map([[day, new Set(['near', 'far'])]]),
+    );
+
+    expect(
+      days[0]?.stops.flatMap((s) => (s.kind === 'spot' ? [s.spotId] : [])),
+    ).toEqual(['near', 'mid', 'far']);
+  });
+
+  it('keeps lunch where the traveler put it', () => {
+    const frames = plainDays(1);
+    const day = DATES[0] ?? '';
+    const [a, b, c] = ['a', 'b', 'c'].map((id, n) =>
+      spot(id, 38.712 + n * 0.001, -9.141),
+    );
+    const kinds = (lunchAfter: number) =>
+      arrangePlan(
+        frames,
+        HOME,
+        new Map([
+          [
+            day,
+            {
+              spots: [a, b, c].flatMap((s) => (s === undefined ? [] : [s])),
+              lunchAfter,
+            },
+          ],
+        ]),
+        new Map([[day, new Set(['a', 'b', 'c'])]]),
+      )[0]?.stops.map((s) => s.spotId ?? s.kind);
+
+    expect(kinds(1)).toEqual(['a', 'lunch', 'b', 'c']);
+    expect(kinds(3)).toEqual(['a', 'b', 'c', 'lunch']);
+  });
+
+  it('never starts a lunch the traveler moved earlier before noon', () => {
+    const frames = plainDays(1);
+    const day = DATES[0] ?? '';
+    const stops =
+      arrangePlan(
+        frames,
+        HOME,
+        new Map([[day, { spots: [spot('a', 38.712, -9.141)], lunchAfter: 0 }]]),
+        new Map([[day, new Set(['a'])]]),
+      )[0]?.stops ?? [];
+
+    expect(stops.map((s) => s.kind)).toEqual(['lunch', 'spot']);
+    expect(stops[0]?.startsAt.slice(0, 5)).toBe('12:00');
   });
 });

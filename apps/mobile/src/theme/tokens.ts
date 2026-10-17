@@ -36,6 +36,17 @@ export const colors = {
   'warning-100': '#FDF0DC',
   link: midnight900,
   focus: midnight700,
+  /** Over photos: the hero's midnight wash, card fades, and what sits on them. */
+  'photo-wash-top': 'rgba(30,42,90,0.55)',
+  'photo-wash-mid': 'rgba(30,42,90,0.25)',
+  'photo-wash-bottom': 'rgba(30,42,90,0.92)',
+  'photo-fade': 'rgba(18,23,38,0.85)',
+  'on-photo-muted': 'rgba(255,255,255,0.85)',
+  'frost-fill': 'rgba(255,255,255,0.18)',
+  'frost-border': 'rgba(255,255,255,0.35)',
+  'on-photo-track': 'rgba(255,255,255,0.3)',
+  dot: 'rgba(140,133,122,0.22)',
+  'glass-fallback': 'rgba(255,255,255,0.88)',
 } as const;
 
 export type ColorName = keyof typeof colors | keyof typeof componentColors;
@@ -57,6 +68,7 @@ const textStyle = (
 });
 
 export const typography = {
+  'display-xl': textStyle(800, 38, 42, -0.03),
   display: textStyle(700, 32, 40, -0.02),
   'title-lg': textStyle(700, 24, 32, -0.01),
   title: textStyle(600, 20, 28),
@@ -92,6 +104,7 @@ export const shadow = {
   card: '0 1px 2px rgba(18,23,38,0.06), 0 2px 8px rgba(18,23,38,0.04)',
   raised: '0 4px 16px rgba(18,23,38,0.10)',
   bar: '0 -4px 20px rgba(18,23,38,0.08)',
+  lifted: '0 2px 4px rgba(18,23,38,0.08), 0 14px 30px rgba(18,23,38,0.20)',
 } as const;
 
 export const size = {
@@ -99,6 +112,20 @@ export const size = {
   'control-h': 48,
   'progress-h': 4,
   'content-max': 720,
+  'home-hero-h': 420,
+  'postcard-w': 236,
+  'postcard-h': 300,
+  'postcard-overlap': 70,
+  'new-card-w': 150,
+  'bento-row-h': 160,
+  stamp: 64,
+  'dot-grid-gap': 16,
+  'dot-r': 1.3,
+  'glow-sun-ry': 420,
+  'glow-midnight-ry': 520,
+  'glow-midnight-y': 900,
+  'dot-fade-h': 640,
+  'profile-panel-w': 288,
 } as const;
 
 // ── Not in tokens.json ───────────────────────────────────────────────────
@@ -107,6 +134,8 @@ export const size = {
 // move into tokens.json when the design system adopts them.
 
 export const componentColors = {
+  /** Not a design colour: keeps text laid out but unseen (letters still to be typed). */
+  transparent: 'transparent',
   /** Dims the screen behind a bottom sheet: ink at 40%. */
   scrim: 'rgba(18,23,38,0.4)',
   /** The route moment (docs/design/screens/route-moment.css), drawn on midnight-900. */
@@ -131,6 +160,10 @@ export const componentSize = {
   'route-checkpoint-current': 6,
   'route-finish': 7,
   'route-finish-dot': 2.5,
+  /** A passed checkpoint you can tap: its dot, the dot's white ring, and the halo around it. */
+  'route-cp-dot': 14,
+  'route-cp-dot-border': 2,
+  'route-cp-halo': 26,
   'route-label-w': 60,
   'route-now-w': 100,
   'summary-dot': 8,
@@ -192,6 +225,8 @@ export const componentSize = {
   'plan-rail': 2,
   'plan-travel-h': 28,
   'brand-mark': 28,
+  /** Room above the home indicator for iOS's floating tab bar, so a tab screen's content can scroll clear of it. */
+  'tab-bar-clearance': 72,
   'progress-track-max': 180,
 } as const;
 
@@ -216,6 +251,10 @@ export const componentTypography = {
   task: textStyle(500, 14, 20),
   /** Destination code on a trip thumbnail. */
   thumb: textStyle(800, 20, 24),
+  /** City names on Home's photo cards: a trip postcard, a wide and a small inspiration tile. */
+  'postcard-city': textStyle(800, 26, 30, -0.02),
+  'tile-city-wide': textStyle(800, 24, 28, -0.01),
+  'tile-city': textStyle(800, 18, 22, -0.01),
 } as const;
 
 /** Prices use tabular numerals so totals line up and don't jitter. */

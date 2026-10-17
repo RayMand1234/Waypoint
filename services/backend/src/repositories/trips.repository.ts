@@ -22,6 +22,7 @@ import {
 } from '../domain/trip.ts';
 import type { UserId } from '../domain/userId.ts';
 import {
+  DestinationEntity,
   TripDayEntity,
   TripEntity,
   TripSelectionEntity,
@@ -228,9 +229,12 @@ export const createTripsRepository = (
       order: { updatedAt: 'DESC' },
     });
     const tripIds = trips.map((trip) => trip.id);
-    const [days, selections] =
+    const destinationIds = [
+      ...new Set(trips.flatMap((trip) => trip.destinationId ?? [])),
+    ];
+    const [days, selections, destinations] =
       tripIds.length === 0
-        ? [[], []]
+        ? [[], [], []]
         : await Promise.all([
             dataSource.manager.find(TripDayEntity, {
               select: { tripId: true },
@@ -241,7 +245,15 @@ export const createTripsRepository = (
               where: { tripId: In(tripIds) },
               order: { kind: 'ASC' },
             }),
+            // Each trip shows its destination's current photo (Home's postcards).
+            dataSource.manager.find(DestinationEntity, {
+              select: { id: true, photo: true },
+              where: { id: In(destinationIds) },
+            }),
           ]);
+    const photoByDestination = new Map(
+      destinations.map((destination) => [destination.id, destination.photo]),
+    );
     const daysByTrip = groupBy(days, (day) => day.tripId);
     const selectionsByTrip = groupBy(
       selections,
@@ -254,6 +266,10 @@ export const createTripsRepository = (
       selections: (selectionsByTrip.get(trip.id) ?? []).map((s) =>
         selectionKindSchema.parse(s.kind),
       ),
+      destinationPhoto:
+        trip.destinationId === null
+          ? null
+          : (photoByDestination.get(trip.destinationId) ?? null),
     }));
   },
 

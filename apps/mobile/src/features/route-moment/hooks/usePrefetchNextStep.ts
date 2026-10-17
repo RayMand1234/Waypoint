@@ -23,8 +23,8 @@ const PREFETCH: Readonly<Record<FinishedStep, Prefetch>> = {
     warmQuery(queryClient, destinationsQuery(trip.styles)),
   2: (queryClient, trip) =>
     warmQuery(queryClient, spotsQuery(trip.destinationId, trip.styles)),
-  3: prefetchStays,
-  4: prefetchFlights,
+  3: prefetchFlights,
+  4: prefetchStays,
   5: prefetchPlan,
   // The summary has no data to load yet.
   6: NOTHING_YET,

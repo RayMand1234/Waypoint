@@ -1,86 +1,121 @@
-import { router } from 'expo-router';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
-import { useMe } from '@/features/profile';
-import { useSession } from '@/shared/auth';
-import { Screen, Text } from '@/shared/components';
-import { useDeleteTrip } from '../hooks/useDeleteTrip';
-import { useGreeting } from '../hooks/useGreeting';
-import { useOpenTrip } from '../hooks/useOpenTrip';
-import { useStartPlanning } from '../hooks/useStartPlanning';
-import { useTrips } from '../hooks/useTrips';
-import { hiLine, initialOf } from '../utils/greeting';
-import { CreateWaypointCard } from './CreateWaypointCard';
-import { HomeHeader } from './HomeHeader';
-import { TripsSection } from './TripsSection';
+import { ProfileBubble } from '@/features/profile';
+import { PaperBackground, Text } from '@/shared/components';
+import { featureFlags } from '@/shared/utils/featureFlags';
+import { useHome } from '../hooks/useHome';
+import { BeenThere } from './BeenThere';
+import { HomeHero } from './HomeHero';
+import { InspirationBento } from './InspirationBento';
+import { TripsError } from './TripsStates';
+import { TripsRail } from './TripsRail';
 
-/** Home — my waypoints: greeting, "Create a waypoint", and every trip. */
+/** How often the scroll position is read (for the status bar). */
+const SCROLL_THROTTLE_MS = 100;
+
+/** Home: a destination photo hero, the trips as postcards, places worth the trip, and past trips. */
 export const HomeScreen = () => {
-  const greeting = useGreeting();
-  const me = useMe();
-  const session = useSession();
-  const trips = useTrips();
-  const deleting = useDeleteTrip();
-  const planning = useStartPlanning();
-  const openTrip = useOpenTrip(planning.planAgain);
-  const name = me.data?.name ?? null;
-  const email =
-    session.status === 'signed-in' ? session.session.user.email : undefined;
+  const home = useHome();
+  const { planning } = home;
+
+  styles.useVariants({ hasTabBar: featureFlags.tabBar });
 
   return (
-    <Screen>
-      <HomeHeader
-        greeting={greeting}
-        hiLine={hiLine(name)}
-        initial={initialOf(name, email)}
-        onProfilePress={() => {
-          router.navigate('/profile');
-        }}
+    <View style={styles.screen}>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="never"
+        onScroll={home.onScroll}
+        scrollEventThrottle={SCROLL_THROTTLE_MS}
+      >
+        <HomeHero
+          {...home.hero}
+          isStarting={planning.isCreating}
+          error={planning.error}
+          onStart={planning.startNew}
+          isProfileOpen={home.profile.isShown}
+          onProfilePress={home.profile.open}
+        />
+        {/* Everything below the hero sits on the paper background. */}
+        <View style={styles.below}>
+          <PaperBackground hasGlows />
+          <TripsRail
+            cards={home.cards}
+            isLoading={home.trips.isLoading}
+            onOpen={home.open}
+            onDelete={home.remove}
+          />
+          {(home.trips.error !== undefined ||
+            home.deleteError !== undefined) && (
+            <View style={styles.notes}>
+              {home.trips.error !== undefined && (
+                <TripsError
+                  message={home.trips.error}
+                  onRetry={home.trips.retry}
+                />
+              )}
+              {home.deleteError !== undefined && (
+                <Text
+                  variant="caption"
+                  color="danger"
+                  accessibilityLiveRegion="polite"
+                >
+                  {home.deleteError}
+                </Text>
+              )}
+            </View>
+          )}
+          {home.inspiration.places.length > 0 && (
+            <InspirationBento
+              {...home.inspiration}
+              onPick={home.startAt}
+              onSeeAll={home.goToExplore}
+            />
+          )}
+          {home.stamps.length > 0 && (
+            <View style={styles.been}>
+              <BeenThere stamps={home.stamps} onOpen={home.openPast} />
+            </View>
+          )}
+        </View>
+      </ScrollView>
+      <ProfileBubble
+        anchor={home.profile.anchor}
+        initial={home.hero.initial}
+        onClose={home.profile.close}
+        onClosed={home.profile.closed}
       />
-      <View style={styles.main}>
-        <View style={styles.create}>
-          <CreateWaypointCard
-            onPress={planning.startNew}
-            isCreating={planning.isCreating}
-          />
-          {planning.error !== undefined && (
-            <Text
-              variant="caption"
-              color="danger"
-              accessibilityLiveRegion="polite"
-            >
-              {planning.error}
-            </Text>
-          )}
-        </View>
-        <View style={styles.create}>
-          <TripsSection
-            trips={trips}
-            onRetry={() => void trips.refetch()}
-            onOpen={openTrip}
-            onDelete={deleting.askToDelete}
-          />
-          {deleting.error !== undefined && (
-            <Text
-              variant="caption"
-              color="danger"
-              accessibilityLiveRegion="polite"
-            >
-              {`We couldn't delete that draft. ${deleting.error}`}
-            </Text>
-          )}
-        </View>
-      </View>
-    </Screen>
+    </View>
   );
 };
 
-const styles = StyleSheet.create((theme) => ({
-  main: {
-    gap: theme.space[8],
-    paddingTop: theme.space[4],
+const styles = StyleSheet.create((theme, rt) => ({
+  screen: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
   },
-  create: {
+  content: {
+    flexGrow: 1,
+  },
+  below: {
+    flexGrow: 1,
+    variants: {
+      // Clear of the tab bar floating over the end of the page, or of the home indicator.
+      hasTabBar: {
+        true: {
+          paddingBottom: rt.insets.bottom + theme.size['tab-bar-clearance'],
+        },
+        false: { paddingBottom: rt.insets.bottom + theme.space[6] },
+      },
+    },
+  },
+  notes: {
     gap: theme.space[2],
+    paddingHorizontal: theme.space[6],
+    paddingBottom: theme.space[6],
+  },
+  been: {
+    marginTop: theme.space[8],
   },
 }));

@@ -288,43 +288,74 @@ export const assignSpots = (
   };
 };
 
+/** A day the traveler arranged: its spots in order, and how many come before lunch (`undefined`: the planner places lunch). */
+export type ArrangedDay = {
+  readonly route: readonly PlanSpot[];
+  readonly lunchAfter: number | undefined;
+};
+
+const LUNCH = 'lunch';
+
+type DayItem = PlanSpot | typeof LUNCH;
+
+const LUNCH_ITEM: readonly DayItem[] = [LUNCH];
+
+const toArranged = (
+  items: readonly DayItem[],
+  hasLunch: boolean,
+): ArrangedDay => ({
+  route: items.filter((item): item is PlanSpot => item !== LUNCH),
+  lunchAfter: hasLunch ? items.indexOf(LUNCH) : undefined,
+});
+
 /**
- * Orders a day the traveler arranged by hand: nearest first from the stay,
- * then reversals while they shorten the route. Nothing is dropped.
+ * Orders a day the traveler arranged by hand. The spots already on that day
+ * keep the traveler's order, and lunch its place among them; each spot new to
+ * the day (moved from another, or added back) goes where it adds the least
+ * travel. Nothing is dropped.
  */
-export const orderDay = (
+export const arrangeDay = (
   frame: DayFrame,
   home: LatLng,
   spots: readonly PlanSpot[],
-): readonly PlanSpot[] => {
-  const nearestFirst = (
-    from: LatLng,
-    left: readonly PlanSpot[],
-  ): PlanSpot[] => {
-    const next = [...left].sort(
-      (a, b) =>
-        Math.hypot(a.lat - from.lat, a.lng - from.lng) -
-          Math.hypot(b.lat - from.lat, b.lng - from.lng) ||
-        a.id.localeCompare(b.id),
-    )[0];
-
-    return next === undefined
-      ? []
-      : [next, ...nearestFirst(next, without(left, next))];
-  };
-  const loose = (route: readonly PlanSpot[]): number => {
-    const schedule = scheduleDay(frame, home, route, { strict: false });
+  kept: ReadonlySet<string>,
+  /** How many of `spots` come before lunch; `undefined` leaves lunch to the planner. */
+  lunchAfter: number | undefined,
+): ArrangedDay => {
+  const hasLunch = lunchAfter !== undefined;
+  const loose = (items: readonly DayItem[]): number => {
+    const { route, lunchAfter: after } = toArranged(items, hasLunch);
+    const schedule = scheduleDay(frame, home, route, {
+      strict: false,
+      lunchAfter: after,
+    });
 
     return schedule === undefined ? Infinity : scheduleCost(schedule);
   };
-  const shorten = (route: readonly PlanSpot[]): readonly PlanSpot[] => {
-    const better = firstWhere(
-      reversals(route),
-      (candidate) => loose(candidate) < loose(route) - EPSILON,
+  const cheapestInsert = (
+    items: readonly DayItem[],
+    spot: PlanSpot,
+  ): readonly DayItem[] =>
+    Array.from({ length: items.length + 1 }, (_, position) => [
+      ...items.slice(0, position),
+      spot,
+      ...items.slice(position),
+    ]).reduce((best, candidate) =>
+      loose(candidate) < loose(best) ? candidate : best,
     );
+  const keptItems = spots.flatMap((spot, index): DayItem[] => [
+    ...(index === lunchAfter ? LUNCH_ITEM : []),
+    ...(kept.has(spot.id) ? [spot] : []),
+  ]);
+  const withLunch: readonly DayItem[] =
+    hasLunch && !keptItems.includes(LUNCH)
+      ? [...keptItems, ...LUNCH_ITEM]
+      : keptItems;
 
-    return better === undefined ? route : shorten(better);
-  };
-
-  return shorten(nearestFirst(home, spots));
+  return toArranged(
+    spots
+      .filter((spot) => !kept.has(spot.id))
+      .reduce(cheapestInsert, withLunch),
+    hasLunch,
+  );
 };

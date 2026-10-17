@@ -5,6 +5,7 @@ export * from './DetailRows';
 export * from './Input';
 export * from './OfferCard';
 export * from './OfferSources';
+export * from './PaperBackground';
 export * from './Route';
 export * from './Screen';
 export * from './SegmentedControl';

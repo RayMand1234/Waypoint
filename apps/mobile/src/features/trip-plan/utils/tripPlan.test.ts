@@ -1,5 +1,14 @@
+import { isoDateSchema } from '@waypoint/contracts/common';
 import { tripDaySchema, type TripDay } from '@waypoint/contracts/trips';
-import { groupingOf, withoutSpot, withSpotOn } from './planEdits';
+import { dropIndex, makeRoomShift } from './dragOrder';
+import {
+  groupingOf,
+  moveItem,
+  withDayOrder,
+  withoutSpot,
+  withSpotOn,
+  withStopsOrdered,
+} from './planEdits';
 import { dayMeta, notPlanned, timelineItem } from './planModel';
 
 const stop = (position: number, overrides: Record<string, unknown> = {}) => ({
@@ -105,5 +114,68 @@ describe('plan edits', () => {
         ],
       }),
     ).toEqual([{ spotId: 'spot-9', name: 'Spot 9' }]);
+  });
+});
+
+describe('reordering a day', () => {
+  it('moves one item to a new index', () => {
+    expect(moveItem(['a', 'b', 'c', 'd'], 0, 2)).toEqual(['b', 'c', 'a', 'd']);
+    expect(moveItem(['a', 'b', 'c', 'd'], 3, 0)).toEqual(['d', 'a', 'b', 'c']);
+  });
+
+  it("sets one day's order, lunch's place too, and leaves the others", () => {
+    const date = isoDateSchema.parse('2027-05-12');
+
+    expect(
+      withDayOrder(groupingOf(days), date, ['spot-2', 'lunch', 'spot-1']),
+    ).toEqual([
+      { date: '2027-05-12', spotIds: ['spot-2', 'spot-1'], lunchAfter: 1 },
+      { date: '2027-05-13', spotIds: ['spot-3'] },
+    ]);
+  });
+
+  it('keeps lunch after the same spots when one before it leaves', () => {
+    const grouping = withDayOrder(
+      groupingOf(days),
+      isoDateSchema.parse('2027-05-12'),
+      ['spot-1', 'spot-2', 'lunch'],
+    );
+
+    expect(withoutSpot(grouping, 'spot-1')[0]).toEqual({
+      date: '2027-05-12',
+      spotIds: ['spot-2'],
+      lunchAfter: 1,
+    });
+  });
+
+  it('swaps spots into each other’s slots, fixed moments staying put', () => {
+    const first = days[0];
+
+    if (first === undefined) throw new Error('no day');
+
+    expect(
+      withStopsOrdered(first, ['spot-2', 'spot-1']).stops.map((s) => s.name),
+    ).toEqual(['Land at Lisbon (LIS)', 'Spot 2', 'Spot 1']);
+  });
+
+  it('lands a dragged row past every row whose centre it passes', () => {
+    const centers = [50, 150, 250, 350];
+
+    expect(dropIndex(centers, 0, 0)).toBe(0);
+    expect(dropIndex(centers, 0, 160)).toBe(1);
+    expect(dropIndex(centers, 0, 320)).toBe(3);
+    expect(dropIndex(centers, 3, -320)).toBe(0);
+  });
+
+  it('slides the cards in between one slot to make room', () => {
+    const bottoms = [100, 210, 320, 430];
+    const shifts = (from: number, to: number) =>
+      bottoms.map((_, index) => makeRoomShift(bottoms, from, to, index));
+
+    // The first card hovers over the third: the second and third move up.
+    expect(shifts(0, 2)).toEqual([0, -110, -110, 0]);
+    // The last hovers over the second: the second and third move down.
+    expect(shifts(3, 1)).toEqual([0, 110, 110, 0]);
+    expect(shifts(-1, -1)).toEqual([0, 0, 0, 0]);
   });
 });
