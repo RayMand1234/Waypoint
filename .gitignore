@@ -41,3 +41,6 @@ supabase/.temp/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Home mockup sample photos (Wikimedia, concept only) — kept locally, not in the repo.
+docs/design/screens/home-photos/img/

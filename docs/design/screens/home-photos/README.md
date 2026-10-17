@@ -7,7 +7,7 @@
 - The postcard's top-right code is the destination's first three letters (the trip list has no airport yet), shown only over a photo.
 - A been-there stamp opens the trip's summary step (no read-only trip view exists yet).
 - The status bar is white over the hero and turns dark once the hero scrolls away.
-**Visual spec:** [`HomePhotos.html`](HomePhotos.html) — open it in a browser. Left phone is the first screen (390 × 844), right phone is the whole page scrolled. Serve the folder (`npx serve .` or `python3 -m http.server`) so the `img/` photos load.
+**Visual spec:** [`HomePhotos.html`](HomePhotos.html) — open it in a browser. Left phone is the first screen (390 × 844), right phone is the whole page scrolled. Its sample photos (`img/`: Wikimedia Commons lead images of Lisbon, Barcelona, Kyoto, Amalfi Coast, Reykjavík, Dubrovnik, Paris, Rome and Oia) are **not in the repo** — put them in `img/` locally (it's git-ignored) and serve the folder (`npx serve .` or `python3 -m http.server`) to see them.
 
 ## Why
 
