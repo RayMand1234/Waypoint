@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { Info, MapPin } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
@@ -31,9 +32,13 @@ export type OfferCardProps = {
   readonly onPress: () => void;
   /** An info button in the corner that opens the option's details. */
   readonly info?: { readonly label: string; readonly onPress: () => void };
+  /** A photo across the top of the card (a stay's); `null` keeps the space with a plain fill. */
+  readonly photoUrl?: string | null;
 };
 
-/** One bookable option — flight, stay or extra — in the shared layout. */
+const PHOTO_FADE_MS = 200;
+
+/** One bookable option — flight, stay or extra — in the shared layout, a stay's with its photo on top. */
 export const OfferCard = ({
   title,
   meta,
@@ -47,10 +52,17 @@ export const OfferCard = ({
   isSelected = false,
   onPress,
   info,
+  photoUrl,
 }: OfferCardProps) => {
   const { theme } = useUnistyles();
+  const hasPhoto = photoUrl !== undefined;
 
-  styles.useVariants({ isBestValue, isSelected, hasInfo: info !== undefined });
+  styles.useVariants({
+    isBestValue,
+    isSelected,
+    hasInfo: info !== undefined,
+    hasPhoto,
+  });
 
   return (
     <View>
@@ -61,48 +73,63 @@ export const OfferCard = ({
         onPress={onPress}
         style={styles.card}
       >
-        {badges.length > 0 && (
-          <View style={styles.row}>
-            {badges.map((badge) => (
-              <Badge key={`${badge.kind}-${badge.label}`} {...badge} />
-            ))}
+        {hasPhoto && (
+          <View style={styles.photo}>
+            {photoUrl !== null && (
+              <Image
+                source={{ uri: photoUrl }}
+                style={styles.image}
+                contentFit="cover"
+                transition={PHOTO_FADE_MS}
+                accessible={false}
+              />
+            )}
           </View>
         )}
-        <View>
-          <Text variant="subtitle">{title}</Text>
-          <Text variant="body" color="ink-muted" numberOfLines={1}>
-            {meta}
-          </Text>
-        </View>
-        {details}
-        {note !== undefined && (
-          <View style={styles.note}>
-            <MapPin
-              size={theme.size['icon-sm']}
-              strokeWidth={theme.size['icon-stroke']}
-              color={theme.colors['midnight-900']}
-            />
-            <Text variant="caption-strong">{note}</Text>
-          </View>
-        )}
-        <View style={styles.foot}>
-          <View>
-            <Text variant="price" tabular>
-              {price}
-            </Text>
-            <Text variant="caption" color="ink-muted">
-              {unit}
-            </Text>
-          </View>
-          {delta !== undefined && (
-            <Text
-              variant="delta"
-              tabular
-              color={delta.direction === 'down' ? 'savings' : 'danger'}
-            >
-              {delta.text}
-            </Text>
+        <View style={styles.body}>
+          {badges.length > 0 && (
+            <View style={styles.row}>
+              {badges.map((badge) => (
+                <Badge key={`${badge.kind}-${badge.label}`} {...badge} />
+              ))}
+            </View>
           )}
+          <View>
+            <Text variant="subtitle">{title}</Text>
+            <Text variant="body" color="ink-muted" numberOfLines={1}>
+              {meta}
+            </Text>
+          </View>
+          {details}
+          {note !== undefined && (
+            <View style={styles.note}>
+              <MapPin
+                size={theme.size['icon-sm']}
+                strokeWidth={theme.size['icon-stroke']}
+                color={theme.colors['midnight-900']}
+              />
+              <Text variant="caption-strong">{note}</Text>
+            </View>
+          )}
+          <View style={styles.foot}>
+            <View>
+              <Text variant="price" tabular>
+                {price}
+              </Text>
+              <Text variant="caption" color="ink-muted">
+                {unit}
+              </Text>
+            </View>
+            {delta !== undefined && (
+              <Text
+                variant="delta"
+                tabular
+                color={delta.direction === 'down' ? 'savings' : 'danger'}
+              >
+                {delta.text}
+              </Text>
+            )}
+          </View>
         </View>
       </Pressable>
       {info !== undefined && (
@@ -125,8 +152,6 @@ export const OfferCard = ({
 
 const styles = StyleSheet.create((theme) => ({
   card: {
-    gap: theme.space[3],
-    padding: theme.space[4],
     borderWidth: theme.size.hairline,
     borderRadius: theme.radius.lg,
     variants: {
@@ -144,12 +169,43 @@ const styles = StyleSheet.create((theme) => ({
         true: {
           borderWidth: theme.size['focus-ring'],
           borderColor: theme.colors['midnight-900'],
-          padding: theme.space[4] - theme.size.hairline,
           boxShadow: theme.shadow.raised,
         },
         false: { boxShadow: theme.shadow.card },
       },
     },
+  },
+  body: {
+    gap: theme.space[3],
+    padding: theme.space[4],
+    variants: {
+      // The thicker border takes the padding's place, so nothing shifts.
+      isSelected: {
+        true: { padding: theme.space[4] - theme.size.hairline },
+        false: {},
+      },
+    },
+  },
+  // Clipped to the card's top corners (inside its border).
+  photo: {
+    height: theme.size['offer-photo-h'],
+    overflow: 'hidden',
+    backgroundColor: theme.colors['midnight-100'],
+    variants: {
+      isSelected: {
+        true: {
+          borderTopLeftRadius: theme.radius.lg - theme.size['focus-ring'],
+          borderTopRightRadius: theme.radius.lg - theme.size['focus-ring'],
+        },
+        false: {
+          borderTopLeftRadius: theme.radius.lg - theme.size.hairline,
+          borderTopRightRadius: theme.radius.lg - theme.size.hairline,
+        },
+      },
+    },
+  },
+  image: {
+    ...StyleSheet.absoluteFillObject,
   },
   row: {
     flexDirection: 'row',
@@ -166,7 +222,19 @@ const styles = StyleSheet.create((theme) => ({
         },
         false: {},
       },
+      hasPhoto: {
+        true: {},
+        false: {},
+      },
     },
+    // With a photo, the info button sits on it, clear of the badges.
+    compoundVariants: [
+      {
+        hasInfo: true,
+        hasPhoto: true,
+        styles: { paddingRight: 0 },
+      },
+    ],
   },
   note: {
     flexDirection: 'row',
@@ -182,6 +250,21 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: theme.radius.md,
+    variants: {
+      // On a photo, the button sits on a white disc.
+      hasPhoto: {
+        true: {
+          top: theme.space[2],
+          right: theme.space[2],
+          width: theme.size['tap-min'] - theme.space[1],
+          height: theme.size['tap-min'] - theme.space[1],
+          borderRadius: theme.radius.full,
+          backgroundColor: theme.colors['surface-card'],
+          boxShadow: theme.shadow.card,
+        },
+        false: {},
+      },
+    },
   },
   foot: {
     flexDirection: 'row',

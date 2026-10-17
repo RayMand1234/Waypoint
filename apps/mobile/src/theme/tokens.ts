@@ -213,6 +213,9 @@ export const componentSize = {
   /** Stay details sheet (Stay.dc.html): the big photo and its thumbnails. */
   'stay-photo-h': 196,
   'stay-thumb-h': 60,
+  'stay-thumb-w': 80,
+  /** Offer cards: the photo across the top of a stay's card. */
+  'offer-photo-h': 140,
   /** Spot details sheet: the spot's photo. */
   'spot-photo-h': 196,
   /** Flight cards (Flights.dc.html): the "Out" / "Back" column. */

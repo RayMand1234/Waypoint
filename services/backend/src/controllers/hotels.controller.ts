@@ -1,5 +1,6 @@
 import {
   getHotelResponseSchema,
+  getHotelReviewsResponseSchema,
   hotelParamsSchema,
   hotelSearchRequestSchema,
   hotelSearchResponseSchema,
@@ -14,6 +15,7 @@ import type { HotelsService } from '../services/hotels.service.ts';
 export type HotelsController = {
   readonly list: RequestHandler;
   readonly detail: RequestHandler;
+  readonly reviews: RequestHandler;
   readonly search: RequestHandler;
 };
 
@@ -29,6 +31,11 @@ export const createHotelsController = (
     getHotelResponseSchema,
     z.object({ params: hotelParamsSchema }),
     ({ params }) => hotels.detail(params.hotelId),
+  ),
+  reviews: route(
+    getHotelReviewsResponseSchema,
+    z.object({ params: hotelParamsSchema }),
+    ({ params }) => hotels.reviews(params.hotelId),
   ),
   search: route(
     hotelSearchResponseSchema,

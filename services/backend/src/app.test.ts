@@ -65,6 +65,7 @@ const fakeServices = (logger: Logger) => {
     hotels: {
       list: vi.fn(unused),
       detail: vi.fn(unused),
+      reviews: vi.fn(unused),
       search: vi.fn(() => Promise.resolve(ok({ offers: [], errors: [] }))),
     },
     flights: {

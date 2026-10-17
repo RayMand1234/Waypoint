@@ -180,10 +180,13 @@ export type {
 export {
   cancellationSchema,
   getHotelResponseSchema,
+  getHotelReviewsResponseSchema,
   hotelDetailSchema,
   hotelLocationSchema,
   hotelOfferSchema,
   hotelParamsSchema,
+  hotelReviewSchema,
+  hotelReviewsSchema,
   hotelSearchLocationSchema,
   DEFAULT_GUEST_NATIONALITY,
   hotelSearchRequestSchema,
@@ -193,14 +196,18 @@ export {
   listHotelsResponseSchema,
   MAX_STOPS,
   stopPointSchema,
+  travelerTypeSchema,
 } from './hotels/index.ts';
 export type {
   Cancellation,
   GetHotelResponse,
+  GetHotelReviewsResponse,
   HotelDetail,
   HotelLocation,
   HotelOffer,
   HotelParams,
+  HotelReview,
+  HotelReviews,
   HotelSearchLocation,
   HotelSearchRequest,
   HotelSearchResponse,
@@ -208,6 +215,7 @@ export type {
   ListHotelsQuery,
   ListHotelsResponse,
   StopPoint,
+  TravelerType,
 } from './hotels/index.ts';
 
 export {
