@@ -39,6 +39,7 @@ export const reviewCount = (total: number): string =>
 
 /** Whether there's anything worth a section: a review to read or a summary. */
 export const hasSomethingToSay = (reviews: HotelReviews): boolean =>
-  reviews.reviews.length > 0 ||
+  reviews.best.length > 0 ||
+  reviews.critical.length > 0 ||
   reviews.likes.length > 0 ||
   reviews.dislikes.length > 0;

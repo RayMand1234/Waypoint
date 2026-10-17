@@ -81,8 +81,8 @@ const countryCodeOf = (
   return code.success ? code.data : null;
 };
 
-/** How many of the latest reviews are read; the best few are picked from these. */
-const REVIEWS_READ = 40;
+/** How many of the latest reviews are read (liteAPI's largest page); the best and most critical are picked from these. */
+const REVIEWS_READ = 1000;
 
 /** liteAPI's traveller groups as Waypoint's. */
 const TRAVELER_TYPES: Readonly<Record<string, TravelerType>> = {

@@ -32,27 +32,42 @@ const source = (
 });
 
 describe('toHotelReviews', () => {
-  it('keeps the best written English reviews, highest score then newest', () => {
+  it('picks the best and the most critical written English reviews', () => {
     const picked = toHotelReviews(
       source([
         review(8, 1),
         review(10, 2),
         review(10, 5),
         review(9, 3),
-        review(7, 4),
+        review(2, 4),
+        review(4, 6),
+        review(4, 7),
+        review(7, 8),
       ]),
     );
 
-    expect(picked.reviews.map((r) => r.name)).toEqual([
+    expect(picked.best.map((r) => r.name)).toEqual([
       'Guest 5',
       'Guest 2',
       'Guest 3',
+    ]);
+    expect(picked.critical.map((r) => r.name)).toEqual([
+      'Guest 4',
+      'Guest 7',
+      'Guest 6',
     ]);
     expect(picked).toMatchObject({
       total: 4557,
       likes: ['Great location'],
       dislikes: ['Small rooms'],
     });
+  });
+
+  it('never shows a review in both lists when there are few', () => {
+    const picked = toHotelReviews(source([review(9, 1), review(3, 2)]));
+
+    expect(picked.best.map((r) => r.name)).toEqual(['Guest 1', 'Guest 2']);
+    expect(picked.critical).toEqual([]);
   });
 
   it('skips reviews in other languages and ones with nothing written', () => {
@@ -65,7 +80,7 @@ describe('toHotelReviews', () => {
       ]),
     );
 
-    expect(picked.reviews.map((r) => r.name)).toEqual(['Guest 4']);
-    expect(picked.reviews[0]).not.toHaveProperty('language');
+    expect(picked.best.map((r) => r.name)).toEqual(['Guest 4']);
+    expect(picked.best[0]).not.toHaveProperty('language');
   });
 });

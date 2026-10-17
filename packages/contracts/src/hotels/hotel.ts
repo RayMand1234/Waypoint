@@ -154,12 +154,15 @@ export type HotelReview = z.infer<typeof hotelReviewSchema>;
 /**
  * What guests say about a hotel: how many reviews there are, what they like
  * and dislike most (the source's summary of them; empty when it has none),
- * and a few of the best written reviews.
+ * and a few written reviews from each end — the best, and the most critical.
  */
 export const hotelReviewsSchema = z.object({
   total: z.number().int().min(0),
   likes: z.array(z.string().min(1)),
   dislikes: z.array(z.string().min(1)),
-  reviews: z.array(hotelReviewSchema),
+  /** Highest score first. */
+  best: z.array(hotelReviewSchema),
+  /** Lowest score first; never one of `best`. */
+  critical: z.array(hotelReviewSchema),
 });
 export type HotelReviews = z.infer<typeof hotelReviewsSchema>;

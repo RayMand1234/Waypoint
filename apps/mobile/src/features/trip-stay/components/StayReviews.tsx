@@ -1,4 +1,4 @@
-import type { HotelReviews } from '@waypoint/contracts/hotels';
+import type { HotelReview, HotelReviews } from '@waypoint/contracts/hotels';
 import { View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { Text } from '@/shared/components';
@@ -27,9 +27,27 @@ const Phrases = ({
   </View>
 );
 
+/** A labelled run of reviews: the best, or the most critical. */
+const ReviewGroup = ({
+  title,
+  reviews,
+}: {
+  readonly title: string;
+  readonly reviews: readonly HotelReview[];
+}) => (
+  <View style={styles.group}>
+    <Text variant="label" accessibilityRole="header">
+      {title}
+    </Text>
+    {reviews.map((review) => (
+      <ReviewCard key={`${review.date}-${review.name ?? ''}`} review={review} />
+    ))}
+  </View>
+);
+
 /**
  * What guests say: how many reviews there are, what they like and dislike
- * most, and the best few written reviews, unedited. Nothing shows until they
+ * most, then the best few written reviews and the most critical, unedited. Nothing shows until they
  * load, or when there's nothing to say.
  */
 export const StayReviews = ({
@@ -55,12 +73,12 @@ export const StayReviews = ({
       {reviews.dislikes.length > 0 && (
         <Phrases label="Some mention" phrases={reviews.dislikes} />
       )}
-      {reviews.reviews.map((review) => (
-        <ReviewCard
-          key={`${review.date}-${review.name ?? ''}`}
-          review={review}
-        />
-      ))}
+      {reviews.best.length > 0 && (
+        <ReviewGroup title="Top reviews" reviews={reviews.best} />
+      )}
+      {reviews.critical.length > 0 && (
+        <ReviewGroup title="Most critical" reviews={reviews.critical} />
+      )}
     </View>
   );
 };
@@ -76,6 +94,9 @@ const styles = StyleSheet.create((theme) => ({
     gap: theme.space[3],
   },
   phrases: {
+    gap: theme.space[2],
+  },
+  group: {
     gap: theme.space[2],
   },
   pills: {
