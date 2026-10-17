@@ -1,7 +1,9 @@
 import {
   getHotelResponseSchema,
+  getHotelReviewsResponseSchema,
   hotelSearchResponseSchema,
   type HotelDetail,
+  type HotelReviews,
   type HotelSearchRequest,
   type HotelSearchResponse,
 } from '@waypoint/contracts/hotels';
@@ -29,6 +31,17 @@ export const fetchHotel = async (hotelId: string): Promise<HotelDetail> =>
       getHotelResponseSchema,
     )
   ).hotel;
+
+/** What guests say about a hotel: the total, the summary, and the best few reviews. */
+export const fetchHotelReviews = async (
+  hotelId: string,
+): Promise<HotelReviews> =>
+  (
+    await apiRequest(
+      `/hotels/${encodeURIComponent(hotelId)}/reviews`,
+      getHotelReviewsResponseSchema,
+    )
+  ).reviews;
 
 export const saveStay = (
   tripId: string,

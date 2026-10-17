@@ -74,6 +74,7 @@ export const StayStepForm = ({
           card={stayCard(details.offer, step.highlights)}
           detail={details.detail}
           photos={details.photos}
+          reviews={details.reviews}
           isPicked={details.offer.hotel.id === pick.picked?.hotel.id}
           onPick={(hotelId) => {
             pick.pick(hotelId);

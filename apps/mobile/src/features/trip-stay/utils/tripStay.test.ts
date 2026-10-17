@@ -2,12 +2,19 @@ import { isoDateSchema, isoDateTimeSchema } from '@waypoint/contracts/common';
 import { hotelOfferSchema, type HotelOffer } from '@waypoint/contracts/hotels';
 import { spotSchema, type Spot } from '@waypoint/contracts/destinations';
 import { formatMoney } from '@/shared/utils/format';
-import { stayCard, stayHighlights, stayPhotos } from './stayCardModel';
+import {
+  ratedFromText,
+  stayCard,
+  stayHighlights,
+  stayPhotos,
+} from './stayCardModel';
 import { stayResultsState } from './stayResults';
 import { orderStays } from './stayOrder';
 import { pickedStops, stayRequest } from './stayRequest';
 import { selectionOf } from '@/features/trip-flow';
 import { chosenHotelId } from './staySelection';
+import { pageAt } from './gallery';
+import { reviewByline, reviewCount, scoreText } from './reviewModel';
 
 const offer = (
   id: string,
@@ -243,5 +250,48 @@ describe('stayPhotos', () => {
       'https://img.example/main.jpg',
     ]);
     expect(stayPhotos(offer('q', 1_000), undefined)).toEqual([]);
+  });
+});
+
+describe('pageAt', () => {
+  it('settles on the nearest photo, within the gallery', () => {
+    expect(pageAt(0, 300, 12)).toBe(0);
+    expect(pageAt(640, 300, 12)).toBe(2);
+    expect(pageAt(5000, 300, 12)).toBe(11);
+    expect(pageAt(-20, 300, 12)).toBe(0);
+    expect(pageAt(100, 0, 12)).toBe(0);
+  });
+});
+
+describe('review wording', () => {
+  it('says who wrote it, how they travelled and when', () => {
+    expect(
+      reviewByline({
+        name: 'Charles',
+        travelerType: 'couple',
+        date: isoDateTimeSchema.parse('2026-10-14T00:00:00Z'),
+      }),
+    ).toBe('Charles · Couple · Oct 2026');
+    expect(
+      reviewByline({
+        name: null,
+        travelerType: 'other',
+        date: isoDateTimeSchema.parse('2026-01-02T00:00:00Z'),
+      }),
+    ).toBe('Jan 2026');
+  });
+
+  it('words scores and counts', () => {
+    expect(scoreText(10)).toBe('10');
+    expect(scoreText(8.5)).toBe('8.5');
+    expect(reviewCount(4557)).toBe('4,557 reviews');
+    expect(reviewCount(1)).toBe('1 review');
+  });
+});
+
+describe('rating wording', () => {
+  it('says when the score is our own average of the reviews', () => {
+    expect(ratedFromText({ ratedFrom: 1000 })).toBe('from 1,000 reviews');
+    expect(ratedFromText({ ratedFrom: null })).toBeNull();
   });
 });

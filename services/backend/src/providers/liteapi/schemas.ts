@@ -131,6 +131,31 @@ const rawAmountOrList = z.union([
   z.tuple([rawAmount], rawAmount).transform(([first]) => first),
 ]);
 
+/* ── /data/reviews ─────────────────────────────────────────────────────── */
+
+export const rawReview = z.object({
+  averageScore: z.number(),
+  name: optionalString,
+  country: optionalString,
+  type: optionalString,
+  date: z.string().min(1),
+  headline: optionalString,
+  language: optionalString,
+  pros: optionalString,
+  cons: optionalString,
+});
+
+export const rawReviewsEnvelope = z.object({
+  data: z.array(z.unknown()).nullish(),
+  total: optionalNumber,
+  sentimentAnalysis: z
+    .object({
+      pros: z.array(z.string()).nullish(),
+      cons: z.array(z.string()).nullish(),
+    })
+    .nullish(),
+});
+
 export const rawRateHotel = z.object({
   hotelId: z.string().min(1),
   roomTypes: z

@@ -5,6 +5,7 @@ import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { DetailRows, Text } from '@/shared/components';
 import {
   CANCELLATION_TEXT,
+  ratedFromText,
   ratingWords,
   type StayCardModel,
 } from '../utils/stayCardModel';
@@ -24,6 +25,7 @@ export const StayFacts = ({
 }) => {
   const { theme } = useUnistyles();
   const { rating, reviewCount } = offer.hotel;
+  const ratedFrom = ratedFromText(offer.hotel);
   const rows = [
     ['Room', offer.roomName],
     ['Meals', offer.boardName ?? 'Room only'],
@@ -47,9 +49,11 @@ export const StayFacts = ({
             <Text variant="body-strong">
               {`${rating.toFixed(1)} ${ratingWords(rating)}`}
             </Text>
-            {reviewCount !== null && (
+            {(ratedFrom !== null || reviewCount !== null) && (
               <Text variant="caption" color="ink-muted">
-                {`· ${String(reviewCount)} guest reviews`}
+                {ratedFrom === null
+                  ? `· ${String(reviewCount)} guest reviews`
+                  : `· ${ratedFrom}`}
               </Text>
             )}
           </View>

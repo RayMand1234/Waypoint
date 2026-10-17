@@ -1,4 +1,8 @@
-import type { HotelDetail, HotelOffer } from '@waypoint/contracts/hotels';
+import type {
+  HotelDetail,
+  HotelOffer,
+  HotelReviews,
+} from '@waypoint/contracts/hotels';
 import { Linking, ScrollView, View } from 'react-native';
 import { StyleSheet } from 'react-native-unistyles';
 import { lowestSource } from '@/features/trip-flow';
@@ -7,6 +11,7 @@ import { plural } from '@/shared/utils/text';
 import type { StayCardModel } from '../utils/stayCardModel';
 import { StayFacts } from './StayFacts';
 import { StayPhotos } from './StayPhotos';
+import { StayReviews } from './StayReviews';
 
 type StayDetailsSheetProps = {
   readonly offer: HotelOffer;
@@ -14,17 +19,20 @@ type StayDetailsSheetProps = {
   /** The hotel's details; loads after the sheet opens. */
   readonly detail: HotelDetail | undefined;
   readonly photos: readonly string[];
+  /** What guests say; loads after the sheet opens. */
+  readonly reviews: HotelReviews | undefined;
   readonly isPicked: boolean;
   readonly onPick: (hotelId: string) => void;
   readonly onClose: () => void;
 };
 
-/** One stay up close: photos, terms, facilities and every site's price, then View or Select. */
+/** One stay up close: photos, terms, facilities, what guests say and every site's price, then View or Select. */
 export const StayDetailsSheet = ({
   offer,
   card,
   detail,
   photos,
+  reviews,
   isPicked,
   onPick,
   onClose,
@@ -67,6 +75,7 @@ export const StayDetailsSheet = ({
           urls={photos}
         />
         <StayFacts offer={offer} card={card} detail={detail} />
+        <StayReviews reviews={reviews} />
         <OfferSources
           sources={offer.sources}
           caption={`${plural(offer.nights, 'night')}, all fees`}

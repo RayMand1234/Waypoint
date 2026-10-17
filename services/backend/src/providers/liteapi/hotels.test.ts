@@ -205,4 +205,83 @@ describe('liteAPI hotel catalog', () => {
       },
     });
   });
+
+  it('reads reviews and the summary, mapping traveller types and skipping unreadable ones', async () => {
+    const { catalog, calls } = setup(() => ({
+      body: {
+        data: [
+          {
+            averageScore: 10,
+            name: 'Charles',
+            country: 'au',
+            type: 'couple',
+            date: '2026-10-14T00:00:00Z',
+            headline: 'Perfect stay',
+            language: 'en-gb',
+            pros: 'Staff and location',
+            cons: '',
+            source: 'Nuitee',
+          },
+          {
+            averageScore: 7,
+            type: 'solo_traveller',
+            date: 'not a date',
+            language: 'en',
+          },
+          { name: 'no score' },
+        ],
+        total: 4557,
+        sentimentAnalysis: {
+          pros: ['Great location', ''],
+          cons: ['Small rooms'],
+        },
+      },
+    }));
+
+    const result = await catalog.reviews('lpc0c60');
+
+    expect(calls[0]?.url.pathname).toBe('/v3.0/data/reviews');
+    expect(calls[0]?.url.searchParams.get('getSentiment')).toBe('true');
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        total: 4557,
+        likes: ['Great location'],
+        dislikes: ['Small rooms'],
+        reviews: [
+          {
+            score: 10,
+            name: 'Charles',
+            countryCode: 'AU',
+            travelerType: 'couple',
+            date: '2026-10-14T00:00:00Z',
+            headline: 'Perfect stay',
+            liked: 'Staff and location',
+            disliked: null,
+            language: 'en-gb',
+          },
+        ],
+      },
+    });
+  });
+
+  it('reads a 0 rating as no rating — liteAPI sends 0 for hotels it hasn’t rated', async () => {
+    const { catalog } = setup(() => ({
+      body: {
+        data: {
+          id: 'lp466fa',
+          name: 'Hotel Trianon Rive Gauche',
+          location: { latitude: 48.84, longitude: 2.34 },
+          rating: 0,
+          reviewCount: 5167,
+          starRating: 4,
+        },
+      },
+    }));
+
+    expect(await catalog.hotel('lp466fa')).toMatchObject({
+      ok: true,
+      value: { rating: null, reviewCount: 5167, stars: 4 },
+    });
+  });
 });

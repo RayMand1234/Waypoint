@@ -22,6 +22,7 @@ import type {
   Cancellation,
   HotelDetail,
   HotelLocation,
+  HotelReview,
   HotelSearchRequest,
   HotelSummary,
 } from '@waypoint/contracts/hotels';
@@ -74,6 +75,21 @@ export type HotelCatalog = {
     readonly offset: number;
   }) => ProviderResult<readonly HotelSummary[]>;
   readonly hotel: (hotelId: string) => ProviderResult<HotelDetail>;
+  /** The hotel's latest reviews, with the source's summary of them. */
+  readonly reviews: (hotelId: string) => ProviderResult<ProviderHotelReviews>;
+};
+
+/** A hotel's latest reviews from ONE source — before the best are picked. */
+export type ProviderHotelReviews = {
+  /** All the hotel's reviews at the source, not just these. */
+  readonly total: number;
+  /** What guests like and dislike most, as the source sums them up; empty without a summary. */
+  readonly likes: readonly string[];
+  readonly dislikes: readonly string[];
+  /** Newest first, each with the language it was written in (`en-gb`, `de`…) when known. */
+  readonly reviews: readonly (HotelReview & {
+    readonly language: string | null;
+  })[];
 };
 
 /** One hotel's cheapest room from ONE provider — adapter output, before ranking. */

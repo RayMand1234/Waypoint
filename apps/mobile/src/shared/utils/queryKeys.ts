@@ -23,6 +23,7 @@ export const queryKeys = {
   staySearch: (request: HotelSearchRequest | undefined) =>
     ['hotels', 'search', request] as const,
   hotel: (hotelId: string) => ['hotels', hotelId] as const,
+  hotelReviews: (hotelId: string) => ['hotels', hotelId, 'reviews'] as const,
   /** Live fares for one search (its whole request is the key). */
   flightSearch: (request: FlightSearchRequest | undefined) =>
     ['flights', 'search', request] as const,

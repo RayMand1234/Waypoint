@@ -1,9 +1,11 @@
-import { assertNever, type Result } from '@waypoint/contracts/common';
+import { assertNever, ok, type Result } from '@waypoint/contracts/common';
 import {
   getHotelResponseSchema,
+  getHotelReviewsResponseSchema,
   hotelSearchResponseSchema,
   listHotelsResponseSchema,
   type GetHotelResponse,
+  type GetHotelReviewsResponse,
   type HotelOffer,
   type HotelSearchRequest,
   type HotelSearchResponse,
@@ -23,6 +25,7 @@ import type {
 import { DAY_MS } from '../lib/time.ts';
 import type { Cached } from './cache.service.ts';
 import { loadFromProvider, type ServiceError } from './errors.ts';
+import { needsRating, toHotelReviews } from './hotelReviews.logic.ts';
 import {
   locationFactor,
   searchArea,
@@ -35,6 +38,8 @@ import { LIVE_RATES_TTL_MS, searchOffers, toOfferSource } from './offers.ts';
 import { rankByValue } from './value.ts';
 
 const CATALOG_TTL_MS = 7 * DAY_MS;
+/** New reviews come in daily. */
+const REVIEWS_TTL_MS = DAY_MS;
 const PROVIDER_TIMEOUT_MS = 12_000;
 /** Used when a hotel has neither a guest rating nor stars. */
 const UNKNOWN_QUALITY = 0.6;
@@ -50,6 +55,10 @@ export type HotelsService = {
   readonly detail: (
     hotelId: string,
   ) => Promise<Result<GetHotelResponse, ServiceError>>;
+  /** What guests say: the total, the summary, and the best few reviews. */
+  readonly reviews: (
+    hotelId: string,
+  ) => Promise<Result<GetHotelReviewsResponse, ServiceError>>;
   readonly search: (
     request: HotelSearchRequest,
   ) => Promise<Result<HotelSearchResponse, ServiceError>>;
@@ -207,56 +216,108 @@ export const createHotelsService = ({
   readonly providers: readonly HotelProvider[];
   readonly cached: Cached;
   readonly logger: Logger;
-}): HotelsService => ({
-  list: (query) =>
+}): HotelsService => {
+  const reviews: HotelsService['reviews'] = (hotelId) =>
     cached({
-      key: `hotels:list:${stableKey(query)}`,
-      ttlMs: CATALOG_TTL_MS,
-      schema: listHotelsResponseSchema,
+      key: `hotels:reviews:${hotelId}`,
+      ttlMs: REVIEWS_TTL_MS,
+      schema: getHotelReviewsResponseSchema,
       load: loadFromProvider(
         catalog.id,
-        () => {
-          const { limit, offset, ...location } = query;
-
-          return catalog.listHotels({ location, limit, offset });
-        },
-        (hotels) => ({ hotels: [...hotels] }),
-        'No hotels found there.',
-      ),
-    }),
-
-  detail: (hotelId) =>
-    cached({
-      key: `hotels:detail:${hotelId}`,
-      ttlMs: CATALOG_TTL_MS,
-      schema: getHotelResponseSchema,
-      load: loadFromProvider(
-        catalog.id,
-        () => catalog.hotel(hotelId),
-        (hotel) => ({ hotel }),
+        () => catalog.reviews(hotelId),
+        (source) => ({ reviews: toHotelReviews(source) }),
         'We have no hotel with that id.',
       ),
-    }),
+    });
 
-  search: (request) =>
-    cached({
-      key: `hotels:search:${stableKey(request)}`,
-      ttlMs: LIVE_RATES_TTL_MS,
-      schema: hotelSearchResponseSchema,
-      // A partial answer (a source failed) is shown, but not kept.
-      shouldStore: (response) => response.errors.length === 0,
-      load: () => {
-        const search = resolveSearch(request);
+  /**
+   * Fills in the score the source left out (it sends none for a few hotels
+   * with plenty of reviews) with the average of their latest reviews —
+   * cached, and shared with the reviews route. A hotel whose reviews can't
+   * be read stays unrated.
+   */
+  const withReviewRatings = (
+    offers: readonly ProviderHotelOffer[],
+  ): Promise<ProviderHotelOffer[]> =>
+    Promise.all(
+      offers.map(async (offer) => {
+        if (!needsRating(offer.hotel)) return offer;
 
-        return searchOffers({
-          label: 'hotel',
-          providers,
-          call: (provider, signal) =>
-            provider.searchHotels(search.query, signal),
-          timeoutMs: PROVIDER_TIMEOUT_MS,
-          logger,
-          toOffers: (offers) => toHotelOffers(offers, request, search),
-        });
-      },
-    }),
-});
+        const read = await reviews(offer.hotel.id);
+
+        if (!read.ok || read.value.reviews.averageScore === null) return offer;
+
+        const { averageScore, averagedCount } = read.value.reviews;
+
+        return {
+          ...offer,
+          hotel: {
+            ...offer.hotel,
+            rating: averageScore,
+            ratedFrom: averagedCount,
+          },
+        };
+      }),
+    );
+
+  return {
+    list: (query) =>
+      cached({
+        key: `hotels:list:${stableKey(query)}`,
+        ttlMs: CATALOG_TTL_MS,
+        schema: listHotelsResponseSchema,
+        load: loadFromProvider(
+          catalog.id,
+          () => {
+            const { limit, offset, ...location } = query;
+
+            return catalog.listHotels({ location, limit, offset });
+          },
+          (hotels) => ({ hotels: [...hotels] }),
+          'No hotels found there.',
+        ),
+      }),
+
+    detail: (hotelId) =>
+      cached({
+        key: `hotels:detail:${hotelId}`,
+        ttlMs: CATALOG_TTL_MS,
+        schema: getHotelResponseSchema,
+        load: loadFromProvider(
+          catalog.id,
+          () => catalog.hotel(hotelId),
+          (hotel) => ({ hotel }),
+          'We have no hotel with that id.',
+        ),
+      }),
+
+    reviews,
+
+    search: (request) =>
+      cached({
+        key: `hotels:search:${stableKey(request)}`,
+        ttlMs: LIVE_RATES_TTL_MS,
+        schema: hotelSearchResponseSchema,
+        // A partial answer (a source failed) is shown, but not kept.
+        shouldStore: (response) => response.errors.length === 0,
+        load: () => {
+          const search = resolveSearch(request);
+
+          return searchOffers({
+            label: 'hotel',
+            providers,
+            call: async (provider, signal) => {
+              const found = await provider.searchHotels(search.query, signal);
+
+              return found.ok
+                ? ok(await withReviewRatings(found.value))
+                : found;
+            },
+            timeoutMs: PROVIDER_TIMEOUT_MS,
+            logger,
+            toOffers: (offers) => toHotelOffers(offers, request, search),
+          });
+        },
+      }),
+  };
+};
